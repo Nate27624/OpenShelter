@@ -65,7 +65,7 @@ function normalizeStockLocations(){
 normalizeStockLocations();
 if(location.hash==="#overview")location.hash="#inventory";
 let section=location.hash==="#admin"?"inventory":sections.some(s=>"#"+s[0]===location.hash)?location.hash.slice(1):"public";
-let search="",filter="All",stockFilter="All",publicSearch="",publicCategory="All",purchaseItemId=null,purchaseFeedback="",pendingReceiptId=null,inventoryEditMode=false,inventoryAddMode=false,noticeTimer;
+let search="",filter="All",stockFilter="All",publicSearch="",publicCategory="All",purchaseItemId=null,purchaseFeedback="",pendingReceiptId=null,inventoryEditMode=false,inventoryAddMode=false,inventoryScrollX=0,inventoryScrollY=0,noticeTimer;
 const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const get=id=>data.items.find(x=>x.id===id);
 const atRisk=x=>x.qty<=x.min;
@@ -427,13 +427,48 @@ function settings(){
 }
 
 function view(){return ({inventory,receive,distribute,alerts,public:publicNeeds,history:settings}[section]||inventory)()}
-function render(){root.innerHTML=shell();}
+function syncInventoryScroller(){
+ const box=document.getElementById("inventory-table-scroll");
+ const slider=document.getElementById("inventory-scroll-range");
+ const controls=document.getElementById("inventory-scroll-controls");
+ if(!box||!slider||!controls)return;
+ const overflow=Math.max(0,box.scrollWidth-box.clientWidth);
+ controls.hidden=overflow<2;
+ slider.max=String(Math.max(1,Math.floor(overflow)));
+ slider.value=String(Math.min(Math.max(0,Math.round(box.scrollLeft)),Math.floor(overflow)));
+}
+function initInventoryScroller(){
+ if(section!=="inventory"||!inventoryEditMode)return;
+ const box=document.getElementById("inventory-table-scroll");
+ if(!box)return;
+ box.scrollLeft=inventoryScrollX;
+ box.scrollTop=inventoryScrollY;
+ if(typeof box.addEventListener==="function"){
+  box.addEventListener("scroll",()=>{
+   inventoryScrollX=box.scrollLeft;
+   inventoryScrollY=box.scrollTop;
+   syncInventoryScroller();
+  },{passive:true});
+ }
+ syncInventoryScroller();
+}
+function render(){
+ const previous=document.getElementById("inventory-table-scroll");
+ if(previous){inventoryScrollX=previous.scrollLeft||0;inventoryScrollY=previous.scrollTop||0}
+ root.innerHTML=shell();
+ initInventoryScroller();
+}
 function go(id){if(id!=="admin"&&id!=="overview"&&!sections.some(x=>x[0]===id))return;section=id==="admin"||id==="overview"?"inventory":id;location.hash=id==="overview"?"inventory":id;render();window.scrollTo?.({top:0,behavior:"auto"})}
 document.addEventListener("click",e=>{
  const nav=e.target.closest("[data-go]");
  if(nav){e.preventDefault();go(nav.dataset.go);return}
  const target=e.target.closest("[data-action]");if(!target)return;
  const act=target.dataset.action,id=target.dataset.id;
+ if(act==="inventory-scroll-left"||act==="inventory-scroll-right"){
+  const box=document.getElementById("inventory-table-scroll");
+  if(box){box.scrollLeft+=(act==="inventory-scroll-left"?-360:360);inventoryScrollX=box.scrollLeft;syncInventoryScroller()}
+  return
+ }
  if(act==="inventory-edit-toggle"){
   inventoryEditMode=!inventoryEditMode;
   if(!inventoryEditMode)inventoryAddMode=false;
@@ -478,6 +513,7 @@ function previewInventoryLocationTotal(input){
  output.textContent=sum<=1000000?sum.toLocaleString():"Over limit";
 }
 document.addEventListener("input",e=>{
+ if(e.target.id==="inventory-scroll-range"){const box=document.getElementById("inventory-table-scroll");if(box){box.scrollLeft=Number(e.target.value);inventoryScrollX=box.scrollLeft}}
  if(e.target.matches?.("[data-inventory-count]"))previewInventoryLocationTotal(e.target);
  if(e.target.id==="stock-search"){search=e.target.value;const pane=document.getElementById("inventory-results");if(pane)pane.innerHTML=stockRows();}
  if(e.target.id==="public-item-search"){publicSearch=e.target.value;const pane=document.getElementById("public-preview");if(pane)pane.innerHTML=publicNeedsRows();}
@@ -697,6 +733,7 @@ document.addEventListener("submit",e=>{
   x.min=min;save();render();notify("Low-stock threshold updated for "+x.name);
  }
 });
+window.addEventListener("resize",()=>syncInventoryScroller());
 window.addEventListener("hashchange",()=>{const route=location.hash.slice(1);if(route==="overview"){location.hash="inventory";return}const id=route==="admin"?"inventory":route;if((route==="admin"||sections.some(x=>x[0]===route))&&id!==section){section=id;render();}});
 render();
 })();
