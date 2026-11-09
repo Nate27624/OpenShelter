@@ -43,6 +43,27 @@ const initial=()=>({
 let data;try{data=JSON.parse(localStorage.getItem(storageKey)||"null")}catch{}
 if(!data||!Array.isArray(data.items)||!Array.isArray(data.history)||!Array.isArray(data.lots))data=initial();
 if(!Array.isArray(data.pending))data.pending=[];
+/* Migrate older single-location items into per-location balances without resetting browser data.
+   One item record remains canonical; on-hand totals are always the sum of its allocations. */
+function normalizeStockLocations(){
+ const known=new Set(Array.isArray(data.locations)?data.locations.filter(x=>typeof x==="string"&&x.trim()&&x!=="Unassigned").map(x=>x.trim()):[]);
+ for(const x of data.items){
+  const oldQty=Number.isSafeInteger(x.qty)&&x.qty>=0?x.qty:0;
+  const original=Array.isArray(x.stockLocations)?x.stockLocations:[{location:typeof x.location==="string"&&x.location.trim()?x.location.trim():"Unassigned",qty:oldQty}];
+  const merged=new Map();
+  for(const entry of original){
+   if(!entry||typeof entry.location!=="string"||!Number.isSafeInteger(entry.qty)||entry.qty<0)continue;
+   const loc=entry.location.trim()||"Unassigned";
+   merged.set(loc,(merged.get(loc)||0)+entry.qty);
+   if(loc!=="Unassigned")known.add(loc);
+  }
+  x.stockLocations=[...merged].filter(([,qty])=>qty>0).map(([location,qty])=>({location,qty}));
+  x.qty=x.stockLocations.reduce((sum,entry)=>sum+entry.qty,0);
+  delete x.location;
+ }
+ data.locations=[...known].sort((a,b)=>a.localeCompare(b));
+}
+normalizeStockLocations();
 let section=location.hash==="#admin"?"overview":sections.some(s=>"#"+s[0]===location.hash)?location.hash.slice(1):"public";
 let search="",filter="All",stockFilter="All",publicSearch="",publicCategory="All",purchaseItemId=null,purchaseFeedback="",noticeTimer;
 const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -53,6 +74,13 @@ const available=()=>data.items.reduce((sum,x)=>sum+x.qty,0);
 const days=iso=>Math.ceil((new Date(iso+"T12:00:00")-new Date().setHours(12,0,0,0))/86400000);
 const expiring=()=>data.lots.filter(l=>l.qty>0).sort((a,b)=>a.expiry.localeCompare(b.expiry));
 const categories=()=>[...new Set(data.items.map(x=>x.cat))];
+const locationOptions=()=>data.locations.map(loc=>`<option value="${esc(loc)}">${esc(loc)}</option>`).join("");
+const locationBalances=x=>(x.stockLocations||[]).filter(entry=>entry.qty>0).sort((a,b)=>a.location.localeCompare(b.location));
+const locationSummary=x=>locationBalances(x).map(entry=>`${entry.location} (${entry.qty.toLocaleString()})`).join(", ")||"—";
+const locationUsage=loc=>data.items.reduce((total,x)=>total+(x.stockLocations||[]).filter(entry=>entry.location===loc).reduce((sum,entry)=>sum+entry.qty,0),0);
+const matchingLocation=name=>data.locations.find(loc=>loc.toLowerCase()===name.toLowerCase());
+const cleanLocation=name=>String(name||"").trim().replace(/\\s+/g," ");
+const validLocation=name=>name.length>=1&&name.length<=60&&!/[\\x00-\\x1f\\x7f]/.test(name)&&name!=="Unassigned";
 const save=()=>{try{localStorage.setItem(storageKey,JSON.stringify(data))}catch{}};
 const now=()=>new Date().toLocaleString([],{month:"short",day:"numeric",hour:"numeric",minute:"2-digit"});
 const opt=(selected)=>data.items.map(x=>`<option value="${esc(x.id)}" ${x.id===selected?"selected":""}>${esc(x.name)}</option>`).join("");
@@ -72,16 +100,32 @@ function pendingRows(){
   return `<div class="pending-row"><div class="pending-description"><strong>${esc(x.name)}</strong><small>${p.qty} reported purchased · ${esc(p.time||"Recently reported")}${p.expected?" · Expected "+esc(p.expected):""}</small></div><span class="pending-tag">Awaiting receipt</span><div class="pending-actions"><button type="button" class="btn primary small" data-action="pending-receive" data-id="${esc(p.id)}">Mark received</button><button type="button" class="btn small" data-action="pending-dismiss" data-id="${esc(p.id)}">Dismiss</button></div></div>`;
  }).join("")}</div>`;
 }
-function changeStock(id,delta,kind,note){
+function changeStock(id,delta,kind,note,location=""){
  const x=get(id);
- if(!x||!Number.isInteger(delta)||x.qty+delta<0){notify("This quantity is not available.");return false}
- x.qty+=delta;
- if(delta<0){
-   let remaining=-delta;
-   for(const l of data.lots.filter(z=>z.item===id&&z.qty>0&&days(z.expiry)>=0).sort((a,b)=>a.expiry.localeCompare(b.expiry))){
-    const used=Math.min(l.qty,remaining);l.qty-=used;remaining-=used;if(!remaining)break;
-   }
+ if(!x||!Number.isSafeInteger(delta)||x.qty+delta<0||x.qty+delta>1000000){notify("This quantity is not available.");return false}
+ if(delta>0){
+  const where=location||"Unassigned";
+  if(where!=="Unassigned"&&!data.locations.includes(where)){notify("Select an existing storage location.");return false}
+  const existing=x.stockLocations.find(row=>row.location===where);
+  if(existing)existing.qty+=delta;
+  else x.stockLocations.push({location:where,qty:delta});
+ }else if(delta<0){
+  let remaining=-delta;
+  /* Without an explicit withdrawal shelf, allocate outgoing stock against unassigned
+     quantities first, then known shelves. The total remains canonical. */
+  for(const entry of [...x.stockLocations].sort((a,b)=>(a.location==="Unassigned"?-1:b.location==="Unassigned"?1:a.location.localeCompare(b.location)))){
+   const consumed=Math.min(entry.qty,remaining);
+   entry.qty-=consumed;
+   remaining-=consumed;
+   if(!remaining)break;
+  }
+  x.stockLocations=x.stockLocations.filter(row=>row.qty>0);
+  remaining=-delta;
+  for(const l of data.lots.filter(z=>z.item===id&&z.qty>0&&days(z.expiry)>=0).sort((a,b)=>a.expiry.localeCompare(b.expiry))){
+   const used=Math.min(l.qty,remaining);l.qty-=used;remaining-=used;if(!remaining)break;
+  }
  }
+ x.qty=x.stockLocations.reduce((sum,row)=>sum+row.qty,0);
  movement(kind,id,delta,note);save();render();notify(x.name+": "+(delta>0?"+":"")+delta+" → "+x.qty);return true
 }
 function header(){
