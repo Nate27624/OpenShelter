@@ -397,7 +397,12 @@ document.addEventListener("click",e=>{
  if(act==="purchase-open"){const x=get(id);if(!x||!x.public){notify("This item is not available for public reporting.");return}purchaseItemId=purchaseItemId===id?null:id;purchaseFeedback="";render();document.getElementById("report-quantity")?.focus?.();return}
  if(act==="pending-receive"){const p=pendingReports().find(x=>x.id===id),x=p&&get(p.item);if(!p||!x){notify("Report already handled or invalid.");return}if(!Number.isSafeInteger(p.qty)||p.qty<1||x.qty+p.qty>1000000){notify("Cannot receive this quantity.");return}p.status="received";p.completedAt=now();const ok=changeStock(p.item,p.qty,"Donation","Confirmed donor purchase "+p.id);if(!ok){p.status="pending";save();render();}return}
  if(act==="pending-dismiss"){const p=pendingReports().find(x=>x.id===id);if(!p){notify("Report already handled.");return}if(!confirm("Dismiss this unreceived purchase report? Inventory will not change."))return;p.status="dismissed";p.completedAt=now();movement("Purchase report dismissed",p.item,0,"No receipt confirmed");save();render();notify("Purchase report dismissed; stock unchanged.");return}
- if(act==="reset"){if(!confirm("Restore the fictional inventory to its original sample values?"))return;data=initial();save();search="";filter="All";stockFilter="All";publicSearch="";publicCategory="All";purchaseItemId=null;purchaseFeedback="";render();notify("Example inventory restored.");return}
+ if(act==="location-remove"){
+  if(!data.locations.includes(id)||locationUsage(id)>0){notify("Only unused storage locations can be removed.");return}
+  data.locations=data.locations.filter(loc=>loc!==id);
+  save();render();notify("Unused location removed.");return
+ }
+ if(act==="reset"){if(!confirm("Restore the fictional inventory to its original sample values?"))return;data=initial();normalizeStockLocations();save();search="";filter="All";stockFilter="All";publicSearch="";publicCategory="All";purchaseItemId=null;purchaseFeedback="";render();notify("Example inventory restored.");return}
 });
 document.addEventListener("input",e=>{
  if(e.target.id==="stock-search"){search=e.target.value;const pane=document.getElementById("inventory-results");if(pane)pane.innerHTML=stockRows();}
@@ -414,9 +419,26 @@ document.addEventListener("change",e=>{
  if(e.target.id==="correct-public"){const label=document.getElementById("correct-public-label");if(label)label.textContent=e.target.checked?"Visible":"Private"}
 });
 document.addEventListener("submit",e=>{
- const form=e.target;if(!["receive-form","distribute-form","correct-form","purchase-report-form"].includes(form.id)&&!form.matches("[data-threshold]"))return;
+ const form=e.target;if(!["receive-form","distribute-form","correct-form","purchase-report-form","location-add-form","location-rename-form"].includes(form.id)&&!form.matches("[data-threshold]"))return;
  e.preventDefault();
  const fd=new FormData(form);
+ if(form.id==="location-add-form"){
+  const name=cleanLocation(fd.get("name"));
+  if(!validLocation(name)){notify("Enter a valid location name up to 60 characters.");return}
+  if(matchingLocation(name)){notify("That storage location already exists.");return}
+  data.locations.push(name);data.locations.sort((a,b)=>a.localeCompare(b));
+  save();render();notify("Storage location added: "+name);return
+ }
+ if(form.id==="location-rename-form"){
+  const current=String(fd.get("oldLocation")||""),newName=cleanLocation(fd.get("newName"));
+  if(!data.locations.includes(current)||!validLocation(newName)){notify("Choose a location and enter a valid new name.");return}
+  const duplicate=matchingLocation(newName);
+  if(duplicate&&duplicate!==current){notify("That location name already exists.");return}
+  if(newName===current){notify("The location name has not changed.");return}
+  data.locations=data.locations.map(loc=>loc===current?newName:loc).sort((a,b)=>a.localeCompare(b));
+  for(const x of data.items)for(const stock of x.stockLocations)if(stock.location===current)stock.location=newName;
+  save();render();notify("Location renamed to "+newName);return
+ }
  if(form.id==="purchase-report-form"){
   const id=String(fd.get("item")||""),x=get(id),qty=Number(fd.get("qty")),expected=String(fd.get("expected")||"");
   if(!x||!x.public){notify("That item is not currently public.");return}
