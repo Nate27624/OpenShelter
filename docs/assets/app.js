@@ -257,7 +257,7 @@ function publicNeedsRows(){
    </div>
    ${opened?`<form class="purchase-report-form public-stock-form" id="purchase-report-form"><input type="hidden" name="item" value="${esc(x.id)}">
     <h4>Report your purchase</h4>
-    <p class="muted">Let the shelter know what you've purchased. This demonstration stores your report only in this browser; it is not sent to staff.</p>
+    <p class="muted">Let the shelter know what you've purchased.</p>
     <div class="form-grid">
       <div class="field"><label for="report-quantity">Quantity purchased</label><input name="qty" id="report-quantity" type="number" min="1" max="10000" step="1" value="1" required></div>
       <div class="field"><label for="report-expected">Expected arrival <span class="optional">(optional)</span></label><input type="date" name="expected" id="report-expected" min="${day(0)}"></div>
@@ -281,7 +281,6 @@ function publicNeeds(){
  const visible=data.items.filter(x=>x.public);
  const cats=[...new Set(visible.map(x=>x.cat))].sort();
  return `<section class="panel public-facing-preview public-stock-page">
-  <div class="public-stock-intro"><h2 class="section-sub">Find the supplies you need</h2><p>See what the shelter currently has, and what supplies would help most.</p></div>
   ${purchaseFeedback?`<div class="purchase-feedback" role="status">${esc(purchaseFeedback)}</div>`:""}
   <div class="public-availability-filters">
    <div class="field"><label for="public-item-search">Search supplies</label><input type="search" id="public-item-search" placeholder="Search for an item…" value="${esc(publicSearch)}" autocomplete="off"></div>
