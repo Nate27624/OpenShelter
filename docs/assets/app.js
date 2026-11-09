@@ -8,7 +8,7 @@ const sections=[
  ["receive","Receive donations","＋"],
  ["distribute","Distribute supplies","↗"],
  ["alerts","Alerts & expiration","!"],
- ["history","Activity & corrections","◷"]
+ ["history","Activity log","◷"]
 ];
 const day=n=>{const d=new Date();d.setHours(12,0,0,0);d.setDate(d.getDate()+n);return d.toISOString().slice(0,10)};
 const initial=()=>({
@@ -65,7 +65,7 @@ function normalizeStockLocations(){
 normalizeStockLocations();
 if(location.hash==="#overview")location.hash="#inventory";
 let section=location.hash==="#admin"?"inventory":sections.some(s=>"#"+s[0]===location.hash)?location.hash.slice(1):"public";
-let search="",filter="All",stockFilter="All",publicSearch="",publicCategory="All",purchaseItemId=null,purchaseFeedback="",pendingReceiptId=null,noticeTimer;
+let search="",filter="All",stockFilter="All",publicSearch="",publicCategory="All",purchaseItemId=null,purchaseFeedback="",pendingReceiptId=null,inventoryEditMode=false,inventoryAddMode=false,noticeTimer;
 const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const get=id=>data.items.find(x=>x.id===id);
 const atRisk=x=>x.qty<=x.min;
@@ -131,7 +131,7 @@ function pendingRows(){
   </div>`;
  }).join("")}</div>`;
 }
-function changeStock(id,delta,kind,note,location=""){
+function changeStock(id,delta,kind,note,location="",quiet=false){
  const x=get(id);
  if(!x||!Number.isSafeInteger(delta)||x.qty+delta<0||x.qty+delta>1000000){notify("This quantity is not available.");return false}
  if(delta<0&&location&&!(x.stockLocations||[]).some(entry=>entry.location===location&&entry.qty>=-delta)){notify("Not enough stock at that location.");return false}
@@ -158,7 +158,7 @@ function changeStock(id,delta,kind,note,location=""){
   }
  }
  x.qty=x.stockLocations.reduce((sum,row)=>sum+row.qty,0);
- movement(kind,id,delta,note);save();render();notify(x.name+": "+(delta>0?"+":"")+delta+" → "+x.qty);return true
+ movement(kind,id,delta,note);if(!quiet){save();render();notify(x.name+": "+(delta>0?"+":"")+delta+" → "+x.qty)}return true
 }
 function header(){
 return `<a href="#main" class="skip-link">Skip to inventory content</a>
@@ -189,7 +189,7 @@ receive:["Receive donations","Record items as they arrive using the detailed int
 distribute:["Distribute supplies","Record the supplies given out through day services and outreach."],
 alerts:["Low stock and expiration dates","Check the supplies that are running low and review items approaching their expiration dates."],
 public:["Public facing","Check available supplies and report a purchased donation."],
-history:["Activity and corrections","Review stock movements, correct physical inventory counts, and choose public visibility."]
+history:["Activity log","Review the history of inventory changes."]
 };
 return `${header()}
 <div class="prototype-notice"><div class="prototype-notice-inner"><strong>INVENTORY SYSTEM PROPOSAL</strong> &nbsp; | &nbsp; This is a demonstration, not part of The Open Shelter's live inventory.</div></div>
@@ -381,24 +381,7 @@ function historyRows(){
  return `<div class="table-wrap"><table class="data-table"><thead><tr><th>When</th><th>Activity</th><th>Supply</th><th>Change</th><th>Note</th></tr></thead><tbody>${data.history.map(x=>`<tr><td>${esc(x.time)}</td><td>${esc(x.kind)}</td><td><b>${esc(get(x.item)?.name||x.item)}</b></td><td class="${x.change<0?"negative":"positive"}">${x.change>0?"+":""}${x.change}</td><td>${esc(x.note||"—")}</td></tr>`).join("")}</tbody></table></div>`;
 }
 function settings(){
- return `<div class="history-settings">
- <section class="panel">${title("Activity log")}<p class="muted">Every simulated inventory movement is recorded below. In production this audit log must be server-side and tamper-resistant.</p>${historyRows()}</section>
- <div class="settings-stack">
- <section class="panel">${title("Correct a physical count")}
- <p class="muted">Choose a supply to update its recorded count or public visibility. Both settings are saved together.</p>
- <form id="correct-form">
- <div class="field"><label for="correct-item">Supply</label><select name="item" id="correct-item">${opt("coats")}</select></div>
- <div id="correct-existing" class="stock-summary">Recorded count: <strong>${get("coats").qty} coats</strong></div>
- <div class="field"><label for="correct-qty">Count on shelf</label><input id="correct-qty" name="qty" type="number" min="0" max="1000000" step="1" value="${get("coats").qty}" required></div>
- <div class="field"><label for="correct-reason">Reason for count correction</label><select name="reason" id="correct-reason"><option>Physical count</option><option>Damaged or discarded</option><option>Missed movement</option><option>Other</option></select></div>
- <div class="correction-visibility">
- <div class="correction-visibility-heading"><strong>Public visibility</strong><label class="toggle-wrap"><span id="correct-public-label">${get("coats").public?"Visible":"Private"}</span><input type="checkbox" id="correct-public" class="toggle-input" name="publicVisible" value="on" ${get("coats").public?"checked":""} aria-label="Show selected supply on Public Facing page"><span class="toggle-track"></span></label></div>
- <p>When enabled, this item's availability and recorded quantity appear on the Public Facing page. Private supplies are hidden.</p>
- </div>
- <button class="btn primary" type="submit">Save item changes</button>
- </form>
- </section>
- </div></div>`;
+ return `<section class="panel activity-log-panel">${title("Activity log")}<p class="muted">Every simulated inventory movement is recorded below. In production this audit log must be server-side and tamper-resistant.</p>${historyRows()}</section>`;
 }
 
 function view(){return ({inventory,receive,distribute,alerts,public:publicNeeds,history:settings}[section]||inventory)()}
@@ -410,7 +393,7 @@ document.addEventListener("click",e=>{
  const target=e.target.closest("[data-action]");if(!target)return;
  const act=target.dataset.action,id=target.dataset.id;
  if(act==="prefill"){go("receive");const select=document.getElementById("receive-item");if(select)select.value=id;return}
- if(act==="edit"){go("history");const el=document.getElementById("correct-item");if(el){el.value=id;const x=get(id);document.getElementById("correct-existing").innerHTML="Recorded count: <strong>"+x.qty+" "+esc(x.unit)+"</strong>";document.getElementById("correct-qty").value=x.qty;document.getElementById("correct-public").checked=x.public;document.getElementById("correct-public-label").textContent=x.public?"Visible":"Private";el.scrollIntoView?.({block:"center",behavior:"smooth"});}return}
+
  if(act==="purchase-open"){const x=get(id);if(!x||!x.public){notify("This item is not available for public reporting.");return}purchaseItemId=purchaseItemId===id?null:id;purchaseFeedback="";render();document.getElementById("report-quantity")?.focus?.();return}
  if(act==="pending-receive"){
   const p=pendingReports().find(x=>x.id===id),x=p&&get(p.item);
