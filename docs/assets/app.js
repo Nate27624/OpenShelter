@@ -23,7 +23,7 @@ const concepts=[
 ["20-volunteer-mode","Volunteer quick actions","Daily operations","An extremely simple task-first alternative for volunteers."]
 ];
 const page=document.body.dataset.screen||"home";
-const isHome=page==="home";const base=isHome?"":"../";
+const isHome=page==="home";const base=location.pathname.includes("/concepts/")?"../":"";
 const key="openshelter-inventory-prototype-v2";
 const dateOffset=n=>{let d=new Date();d.setHours(12,0,0,0);d.setDate(d.getDate()+n);return d.toISOString().slice(0,10)};
 const seed=[
@@ -72,12 +72,27 @@ const timeNow=()=>new Date().toLocaleString([],{month:"short",day:"numeric",hour
 const movement=(type,id,delta,note)=>{data.events.unshift({type,id,delta,note,time:timeNow()});data.events=data.events.slice(0,120)};
 const mutate=(id,delta,type,note="")=>{let x=item(id);if(!x)return false;if(x.qty+delta<0){toast("Not enough items in stock.");return false}x.qty+=delta;movement(type,id,delta,note);save();render();toast(esc(x.name)+": "+fmt(delta)+" → "+x.qty);return true};
 function header(){
-return `<header class="sitebar"><div class="sitebar-inner"><a class="logo" href="https://theopenshelter.org/" target="_blank" rel="noopener"><span class="house" aria-hidden="true">⌂</span><span class="brand"><b>The Open Shelter</b><small>Staying behind with those left behind</small></span></a>
-<nav class="site-nav" aria-label="Original Open Shelter website"><a href="https://theopenshelter.org/who-we-are/" target="_blank" rel="noopener">WHO WE ARE</a><a href="https://theopenshelter.org/services/" target="_blank" rel="noopener">SERVICES</a><a href="https://theopenshelter.org/donate/" target="_blank" rel="noopener">DONATE</a><a class="on" href="https://theopenshelter.org/needs-list/" target="_blank" rel="noopener">NEEDS LIST</a><a href="https://theopenshelter.org/staff-contact-us/" target="_blank" rel="noopener">CONTACT</a></nav></div></header>
-<div class="prototype-strip"><div class="strip-inner"><span><b>INVENTORY INTEGRATION PROPOSAL</b> · Public concept preview · Not the live Open Shelter website</span><span><a href="${base}index.html">20 design concepts</a> · <button style="border:0;padding:0;background:none;color:#fff;text-decoration:underline;font-weight:800" data-action="reset">Reset demo data</button></span></div></div>`;
+return `<a class="skip-link" href="#content">Skip to content</a>
+<header class="sitebar"><div class="sitebar-inner">
+<a class="logo" href="https://theopenshelter.org/" target="_blank" rel="noopener" aria-label="The Open Shelter — original website">
+<img class="site-logo" src="https://theopenshelter.org/wp-content/uploads/2023/11/cropped-OS-Letterhead.jpg" width="70" height="64" alt="" loading="eager">
+<span class="brand"><b><span class="brand-the">the</span> Open Shelter</b><small>Staying behind with those left behind.</small></span></a>
+<nav class="site-nav" aria-label="The Open Shelter website navigation">
+<a href="https://theopenshelter.org/who-we-are/" target="_blank" rel="noopener">WHO WE ARE</a>
+<a href="https://theopenshelter.org/services/" target="_blank" rel="noopener">SERVICES</a>
+<a href="https://theopenshelter.org/donate/" target="_blank" rel="noopener">DONATE</a>
+<a href="https://theopenshelter.org/latest-news/" target="_blank" rel="noopener">LATEST NEWS</a>
+<a class="on" href="https://theopenshelter.org/needs-list/" target="_blank" rel="noopener">NEEDS LIST</a>
+<a href="https://theopenshelter.org/staff-contact-us/" target="_blank" rel="noopener">STAFF/CONTACT US</a>
+<a href="https://theopenshelter.org/history/" target="_blank" rel="noopener">HISTORY</a>
+</nav></div></header>
+<div class="prototype-strip"><div class="strip-inner">
+<span><strong>STUDENT DESIGN PROPOSAL</strong><span class="divider-dot">·</span> Inventory concepts for review — not part of The Open Shelter's live website</span>
+<div class="strip-actions"><a href="${base}concepts/">All 20 concepts</a><button type="button" data-action="reset">Reset demo</button></div>
+</div></div>`;
 }
 function sidebar(){
-let out=`<aside class="sidebar" aria-label="Prototype pages"><a class="aside-item home-link ${isHome?"active":""}" href="${base}index.html"><span>⌂</span>All 20 concepts</a>`;
+let out=`<aside class="sidebar" aria-label="Prototype pages"><a class="aside-item home-link ${isHome?"active":""}" href="${base}concepts/"><span>⌂</span>All 20 concepts</a>`;
 let prev="";for(const [id,title,group] of concepts){if(group!==prev){out+=`<div class="aside-divider"></div><div class="aside-head">${esc(group)}</div>`;prev=group}
 out+=`<a class="aside-item ${page===id?"active":""}" href="${cLink(id)}"><span>${id.slice(0,2)}</span>${esc(title)}</a>`;}return out+"</aside>";
 }
@@ -119,13 +134,13 @@ let v=tips[id]||["Treat as a prototype until requirements are validated.","Test 
 return `<div class="guidance"><div class="guide-box"><b>How this could connect to the current website</b>${esc(v[0])}</div><div class="guide-box"><b>Question for shelter staff</b>${esc(v[1])}</div></div>`;
 }
 function concept(){
-const x=concepts.find(c=>c[0]===page);if(!x)return `<h1>Page not found</h1><a href="${base}index.html">All concepts</a>`;
+const x=concepts.find(c=>c[0]===page);if(!x)return `<h1>Page not found</h1><a href="${base}concepts/">All concepts</a>`;
 const idx=concepts.findIndex(c=>c[0]===page);
-return `<div class="breadcrumbs"><a href="${base}index.html">All concepts</a> / ${esc(x[2])} / ${x[0].slice(0,2)}</div>
+return `<div class="breadcrumbs"><a href="${base}concepts/">All concepts</a> / ${esc(x[2])} / ${x[0].slice(0,2)}</div>
 <div class="title-row"><div><div class="eyebrow">Design concept ${x[0].slice(0,2)} of 20</div><h1 class="page-title">${esc(x[1])}</h1></div><div class="header-actions"><span class="tag ${x[2]==="Community"?"public":""}">${esc(x[2])}</span><span class="tag gray">Interactive demonstration</span></div></div>
 <p class="lead">${esc(x[3])} Styled as a proposed addition to Open Shelter's existing site, not a new website.</p><div class="note">All inventory values are fictional. This webpage is a public demonstration, <strong>not</strong> a secured staff portal or real donation submission.</div>
 <section class="demo-surface" aria-label="Interactive example"><div class="demo-top"><b>✦ PROPOSED INTERFACE · ${esc(x[1]).toUpperCase()}</b><small>Concept ${x[0].slice(0,2)} / 20</small></div><div id="screen" class="demo-body"></div></section>
-${guide(x[0])}<div class="bottom-nav"><a href="${idx>0?cLink(concepts[idx-1][0]):base+"index.html"}">← ${idx>0?esc(concepts[idx-1][1]):"All concepts"}</a><a href="${idx<19?cLink(concepts[idx+1][0]):base+"index.html"}">${idx<19?esc(concepts[idx+1][1]):"All concepts"} →</a></div>`;
+${guide(x[0])}<div class="bottom-nav"><a href="${idx>0?cLink(concepts[idx-1][0]):base+"concepts/"}">← ${idx>0?esc(concepts[idx-1][1]):"All concepts"}</a><a href="${idx<19?cLink(concepts[idx+1][0]):base+"concepts/"}">${idx<19?esc(concepts[idx+1][1]):"All concepts"} →</a></div>`;
 }
 const selector=(id,sel)=>`<select name="${id}" id="${id}">${opts(sel)}</select>`;
 const formField=(id,label,type="text",extra="",value="")=>`<div class="field"><label for="${id}">${label}</label><input id="${id}" name="${id}" type="${type}" ${extra} value="${esc(value)}"></div>`;
