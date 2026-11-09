@@ -78,6 +78,7 @@ const locationOptions=()=>data.locations.map(loc=>`<option value="${esc(loc)}">$
 const locationBalances=x=>(x.stockLocations||[]).filter(entry=>entry.qty>0).sort((a,b)=>a.location.localeCompare(b.location));
 const locationSummary=x=>locationBalances(x).map(entry=>`${entry.location} (${entry.qty.toLocaleString()})`).join(", ")||"—";
 const locationUsage=loc=>data.items.reduce((total,x)=>total+(x.stockLocations||[]).filter(entry=>entry.location===loc).reduce((sum,entry)=>sum+entry.qty,0),0);
+const locationItemCount=loc=>data.items.filter(x=>(x.stockLocations||[]).some(entry=>entry.location===loc&&entry.qty>0)).length;
 const matchingLocation=name=>data.locations.find(loc=>loc.toLowerCase()===name.toLowerCase());
 const cleanLocation=name=>String(name||"").trim().replace(/\s+/g," ");
 const validLocation=name=>name.length>=1&&name.length<=60&&!/[\x00-\x1f\x7f]/.test(name)&&name!=="Unassigned";
@@ -235,7 +236,7 @@ function inventory(){
  ${title("Storage locations")}
  <p class="muted">These locations are shared with Receive donations. Each supply remains one canonical inventory item; its available total is distributed across the locations listed above.</p>
  <div class="storage-location-list">
-  ${data.locations.map(loc=>`<div class="storage-location-row"><span><strong>${esc(loc)}</strong><small>${locationUsage(loc).toLocaleString()} units recorded</small></span><button type="button" class="mini-btn" data-action="location-remove" data-id="${esc(loc)}" ${locationUsage(loc)?"disabled":""} title="${locationUsage(loc)?"Only empty locations can be removed":"Remove unused location"}">Remove</button></div>`).join("")||'<p class="muted">No storage locations yet.</p>'}
+  ${data.locations.map(loc=>`<div class="storage-location-row"><span><strong>${esc(loc)}</strong><small>${locationItemCount(loc)} supply ${locationItemCount(loc)===1?"type":"types"} stored</small></span><button type="button" class="mini-btn" data-action="location-remove" data-id="${esc(loc)}" ${locationUsage(loc)?"disabled":""} title="${locationUsage(loc)?"Only empty locations can be removed":"Remove unused location"}">Remove</button></div>`).join("")||'<p class="muted">No storage locations yet.</p>'}
  </div>
  <div class="location-admin-grid">
   <form id="location-add-form" class="location-admin-form">
@@ -246,6 +247,17 @@ function inventory(){
    <div class="field"><label for="location-rename-old">Rename a location</label><select id="location-rename-old" name="oldLocation" required><option value="">Select location…</option>${locationOptions()}</select></div>
    <div class="field"><label for="location-rename-new">New name</label><input id="location-rename-new" name="newName" maxlength="60" placeholder="New location name" required></div>
    <button type="submit" class="btn small">Rename location</button>
+  </form>
+  <form id="location-transfer-form" class="location-admin-form location-transfer-form">
+   <h3>Move stock between locations</h3>
+   <p class="tiny muted">Assign unassigned stock to a shelf or move stock from one location to another without changing the total available.</p>
+   <div class="location-transfer-grid">
+    <div class="field"><label for="location-transfer-item">Supply</label><select id="location-transfer-item" name="item" required>${opt("soup")}</select></div>
+    <div class="field"><label for="location-transfer-qty">Quantity to move</label><input type="number" id="location-transfer-qty" name="qty" min="1" step="1" value="1" required></div>
+    <div class="field"><label for="location-transfer-from">From</label><select id="location-transfer-from" name="from" required><option value="">Choose source…</option><option value="Unassigned">Unassigned</option>${locationOptions()}</select></div>
+    <div class="field"><label for="location-transfer-to">To</label><select id="location-transfer-to" name="to" required><option value="">Choose destination…</option>${locationOptions()}</select></div>
+   </div>
+   <button type="submit" class="btn small">Move stock</button>
   </form>
  </div>
  </section>`;
