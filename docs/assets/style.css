@@ -1005,32 +1005,36 @@ p{margin:0 0 1em}
   font-weight:700;
   text-transform:uppercase;
 }
-/* Temporary comparison: four restrained category-heading treatments. */
-/* Option 1 — Agency: quiet grey band, close to the previous design. */
+/* Temporary comparison: four food-style underlines with the original warm rust palette.
+   All four are intentionally understated to isolate visual differences. */
+/* Option 1 — Agency: clean white, thin muted-rust underline. */
 .public-stock-category.header-quiet-band>h3{
-  background:#f7f7f7;
-  border-bottom:1px solid #dbdbdb;
-  color:#4b4947;
+  background:#fff;
+  color:#754435;
+  border:0;
+  border-bottom:2px solid #b98574;
 }
-/* Option 2 — Clothing: thin, neutral outline. */
+/* Option 2 — Clothing: white, more defined rust underline. */
 .public-stock-category.header-outline>h3{
   background:#fff;
-  border:1px solid #e2e2e2;
-  color:#484848;
+  color:#60362d;
+  border:0;
+  border-bottom:3px solid #a9422e;
 }
-/* Option 3 — Food: white with a restrained underline. */
+/* Option 3 — Food: earlier warm tint and rust type, with Food's underline. */
 .public-stock-category.header-underline>h3{
-  background:#fff;
-  border-bottom:2px solid #b9a7a0;
-  color:#4d4947;
+  background:#f9f4f1;
+  color:#60362d;
+  border:0;
+  border-bottom:2px solid #a9422e;
 }
-/* Option 4 — Hygiene: barely warm band with a slim accent. */
+/* Option 4 — Hygiene: faint warm tint and softer double-rule effect. */
 .public-stock-category.header-soft-accent>h3{
-  background:#faf8f7;
-  border-left:2px solid #ba9d92;
-  border-bottom:1px solid #e6e0dd;
-  padding-left:13px;
-  color:#534741;
+  background:#fcfaf8;
+  color:#704439;
+  border:0;
+  border-bottom:1px solid #a9422e;
+  box-shadow:inset 0 -4px 0 #f5e8e2;
 }
 .public-stock-row{
   border-bottom:1px solid #e9e6e2;
