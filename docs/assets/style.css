@@ -827,6 +827,27 @@ p{margin:0 0 1em}
 }
 .pending-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .pending-actions .btn{font-size:12px}
+/* Staff must review storage and expiry before confirming a reported donation. */
+.pending-entry{border-bottom:1px solid #e5e5e5}
+.pending-entry > .pending-row{border-bottom:0}
+.pending-receipt-form{
+  max-width:760px;
+  margin:0 0 17px;
+  padding:18px 20px;
+  background:#faf8f7;
+  border:1px solid #e6deda;
+}
+.pending-receipt-form h4{font-size:16px;font-weight:650;line-height:1.4;margin:0 0 5px}
+.pending-receipt-form > .muted{font-size:13px;line-height:1.65;margin:0 0 16px}
+.pending-receipt-form .field{margin-bottom:12px}
+.pending-receipt-form .new-location-fields{margin:0 0 15px}
+.pending-receipt-controls{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:4px}
+.pending-receipt-controls .btn{min-height:38px;font-size:13px}
+@media(max-width:600px){
+ .pending-receipt-form{padding:15px 14px}
+ .pending-receipt-form .form-grid{grid-template-columns:1fr;gap:0}
+}
+
 .pending-overview-note{
   background:#f9f7f4;
   border-left:3px solid #95622d;
