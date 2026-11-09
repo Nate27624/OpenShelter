@@ -517,6 +517,7 @@ document.addEventListener("submit",e=>{
   const publicVisible=vis==="public";
   const validQty=value=>/^\d+$/.test(value)&&Number.isSafeInteger(Number(value))&&Number(value)<=1000000;
   const updated=[];
+  let newRegistryLocation="";
   if(existing){
    for(const entry of locationBalances(existing)){
     const raw=String(fd.get("locationQty:"+encodeURIComponent(entry.location))??"");
@@ -527,8 +528,14 @@ document.addEventListener("submit",e=>{
    const added=String(fd.get("addLocation")||"");
    const addRaw=String(fd.get("addLocationQty")??"0");
    if(added){
-    const loc=added==="Unassigned"?"Unassigned":matchingLocation(added);
-    if(!loc||existing.stockLocations.some(row=>row.location===loc)){notify("Choose a different existing location.");return}
+    let loc="";
+    if(added==="__new"){
+     const typed=cleanLocation(fd.get("newLocationName"));
+     if(!validLocation(typed)){notify("Enter a valid new storage location name (up to 60 characters).");return}
+     loc=matchingLocation(typed)||typed;
+     if(!matchingLocation(typed))newRegistryLocation=typed;
+    }else loc=added==="Unassigned"?"Unassigned":matchingLocation(added);
+    if(!loc||existing.stockLocations.some(row=>row.location===loc)){notify("Choose a location that is not already assigned to this item.");return}
     if(!validQty(addRaw)||Number(addRaw)<1){notify("Enter a positive whole-number count for the added location.");return}
     updated.push({location:loc,qty:Number(addRaw)});
    }else if(addRaw!==""&&(!validQty(addRaw)||Number(addRaw)!==0)){
@@ -537,7 +544,13 @@ document.addEventListener("submit",e=>{
   }else{
    const raw=String(fd.get("newLocationQty")??""),selected=String(fd.get("location")||"");
    if(!validQty(raw)){notify("Enter a valid whole-number count for the new item.");return}
-   const loc=selected?matchingLocation(selected):"Unassigned";
+   let loc=selected?matchingLocation(selected):"Unassigned";
+   if(selected==="__new"){
+    const typed=cleanLocation(fd.get("newLocationName"));
+    if(!validLocation(typed)){notify("Enter a valid new storage location name (up to 60 characters).");return}
+    loc=matchingLocation(typed)||typed;
+    if(!matchingLocation(typed))newRegistryLocation=typed;
+   }
    if(!loc){notify("Select a valid location for this supply.");return}
    if(Number(raw)>0)updated.push({location:loc,qty:Number(raw)});
   }
@@ -559,6 +572,7 @@ document.addEventListener("submit",e=>{
    /* Keep dated-lot deductions consistent on a count decrease. The direct
       per-location balances replace the automatic allocation after this adjustment. */
    if(diff&&!changeStock(id,diff,"Correction","Physical count updated from Inventory locations","",true))return;
+   if(newRegistryLocation){data.locations.push(newRegistryLocation);data.locations.sort((a,b)=>a.localeCompare(b))}
    existing.stockLocations=updated;
    existing.qty=total;
    existing.name=name;existing.cat=cat;existing.min=minimum;existing.public=publicVisible;
@@ -566,6 +580,7 @@ document.addEventListener("submit",e=>{
    save();render();notify(name+" updated. Total: "+total.toLocaleString());return
   }
   const createdId="custom-"+Date.now().toString(36)+"-"+Math.random().toString(36).slice(2,9);
+  if(newRegistryLocation){data.locations.push(newRegistryLocation);data.locations.sort((a,b)=>a.localeCompare(b))}
   data.items.push({id:createdId,name,cat,unit:"items",qty:total,min:minimum,public:publicVisible,stockLocations:updated});
   movement("Item created",createdId,total,"Added from Inventory table"+(updated.length?" · "+updated[0].location+": "+total:" · No stock"));
   inventoryAddMode=false;save();render();notify(name+" added to inventory.");return
