@@ -259,6 +259,36 @@ p{margin:0 0 1em}
 .table-foot{font-size:13px;color:#757575;margin:12px 0}
 .inventory-filters{display:grid;grid-template-columns:minmax(240px,1.5fr) minmax(145px,.8fr) minmax(145px,.8fr);gap:16px;align-items:end;margin:21px 0 20px}
 .inventory-filters .field{margin-bottom:0}
+/* Directly editable inventory table; existing storage allocations remain canonical. */
+.inventory-header-actions{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.inventory-table-editing{min-width:1150px}
+.inventory-table-editing td{vertical-align:top;padding:12px 8px}
+.inventory-table-editing input,.inventory-table-editing select{
+  width:100%;min-width:0;max-width:100%;min-height:36px;
+  border:1px solid #c9c9c9;border-radius:2px;background:#fff;
+  color:#303030;padding:7px 8px;font-size:13px;line-height:1.4
+}
+.inventory-table-editing input[type="number"]{width:100px}
+.inventory-table-editing input:focus-visible,.inventory-table-editing select:focus-visible{
+  border-color:var(--accent)
+}
+.inventory-table-editing td:nth-child(1){min-width:175px;width:19%}
+.inventory-table-editing td:nth-child(2){min-width:130px;width:12%}
+.inventory-table-editing td:nth-child(3),
+.inventory-table-editing td:nth-child(4){min-width:93px;width:9%}
+.inventory-table-editing td:nth-child(5){min-width:215px;width:23%}
+.inventory-table-editing td:nth-child(6){min-width:90px}
+.inventory-table-editing td:nth-child(7){min-width:100px}
+.inventory-table-editing td:nth-child(8){min-width:77px}
+.inventory-table-editing .inventory-unit-input{display:block;margin-top:6px}
+.inventory-location-current{display:block;margin:1px 0 8px;line-height:1.45;overflow-wrap:anywhere}
+.inventory-table-editing .location-cell small:not(.inventory-location-current){
+  display:block;margin:6px 0 0;font-size:11px;line-height:1.4
+}
+.inventory-table-editing .btn{min-height:36px;white-space:nowrap}
+.inventory-table-editing .inventory-new-row{background:#faf8f7}
+.inventory-table-editing .inventory-new-row td{border-top:2px solid #ba897b}
+
 
 /* WordPress-like standard forms */
 .field{display:flex;flex-direction:column;gap:7px;min-width:0;margin-bottom:20px}
