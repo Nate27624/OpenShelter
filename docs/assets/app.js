@@ -270,8 +270,7 @@ function publicNeedsRows(){
     const needA=Math.max(0,a.min-a.qty-pendingFor(a.id)),needB=Math.max(0,b.min-b.qty-pendingFor(b.id));
     return Number(needB>0)-Number(needA>0)||a.name.localeCompare(b.name);
    });
-   const design={Agency:"header-quiet-band",Clothing:"header-outline",Food:"header-underline",Hygiene:"header-soft-accent"}[cat]||"header-quiet-band";
-   return `<section class="public-stock-category ${design}"><h3>${esc(cat)}</h3><div class="public-stock-category-rows">${rows.map(row).join("")}</div></section>`;
+   return `<section class="public-stock-category"><h3>${esc(cat)}</h3><div class="public-stock-category-rows">${rows.map(row).join("")}</div></section>`;
   }).join("")}
  </div>`;
 }
