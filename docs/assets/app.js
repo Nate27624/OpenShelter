@@ -118,7 +118,7 @@ return `${header()}
 <div class="prototype-notice"><div class="prototype-notice-inner"><strong>INVENTORY SYSTEM PROPOSAL</strong> &nbsp; | &nbsp; This is a demonstration, not part of The Open Shelter's live inventory.</div></div>
 <main id="main" class="wp-page">
  <nav class="inventory-menu" aria-label="Inventory management sections">
- ${sections.map(s=>`<a href="#${s[0]}" data-go="${s[0]}" class="inventory-tab ${s[0]==="public"?"visitor-tab":""} ${section===s[0]?"active":""}" ${section===s[0]?'aria-current="page"':""}>${s[1]}${s[0]==="alerts"&&shortage().length?` <span class="nav-count">(${shortage().length})</span>`:""}</a>`).join("")}
+ ${sections.map(s=>`<a href="#${s[0]}" data-go="${s[0]}" class="inventory-tab ${s[0]==="public"?"visitor-tab":""} ${section===s[0]?"active":""}" ${section===s[0]?'aria-current="page"':""}>${s[1]}${s[0]==="alerts"&&shortage().length?` <span class="nav-count">(${shortage().length})</span>`:s[0]==="receive"&&pendingReports().length?` <span class="nav-count">(${pendingReports().length})</span>`:""}</a>`).join("")}
  </nav>
  <div class="section-header">
   <div><h2>${meta[section][0]}</h2></div>
@@ -243,7 +243,7 @@ function publicNeedsRows(){
   return `<div class="public-item-with-report"><div class="availability-row public-donation-row"><div class="availability-item"><strong>${esc(x.name)}</strong><small>${esc(x.cat)}</small></div>
    <div class="availability-quantity"><strong>${x.qty.toLocaleString()} ${esc(x.unit)}</strong><span>recorded in inventory</span>${onWay?`<small class="pending-public-note">${onWay} ${esc(x.unit)} donor-reported on the way (unverified)</small>`:""}</div>
    <span class="status ${g.statusClass}">${g.status}</span>
-   <button type="button" class="btn small report-purchase-btn" data-action="purchase-open" data-id="${esc(x.id)}" aria-expanded="${purchaseItemId===x.id?"true":"false"}" aria-controls="purchase-form-area">${purchaseItemId===x.id?"Close form":"I've purchased this"}</button></div>
+   <button type="button" class="btn small report-purchase-btn" data-action="purchase-open" data-id="${esc(x.id)}" aria-expanded="${purchaseItemId===x.id?"true":"false"}">${purchaseItemId===x.id?"Close form":"I've purchased this"}</button></div>
    ${purchaseItemId===x.id?`<form class="purchase-report-form" id="purchase-report-form"><input type="hidden" name="item" value="${esc(x.id)}">
     <h4>Report your purchase of ${esc(x.name)}</h4>
     <p class="muted">Tell us what you've purchased so the shelter can plan for its arrival. This is a demonstration only; your report is not sent to the shelter.</p>
