@@ -1,37 +1,43 @@
-# Open Shelter Inventory Integration Concepts
+# Open Shelter — Inventory Management Prototype
 
-This repository contains a **20-page UI prototype gallery**, designed as a potential extension to the existing [The Open Shelter website](https://theopenshelter.org/), with its public [Needs List](https://theopenshelter.org/needs-list/) as an integration point.
+A **single, cohesive inventory management experience** proposed as a potential integration with [The Open Shelter’s existing website](https://theopenshelter.org/).
 
-**Prototype only:** All sample stock quantities, requests and movements are fictional. Pages are intentionally publicly viewable for design review; staff workflows must be protected by login and a server-side permissions system before using any real data.
+**Live prototype:** https://nate27624.github.io/OpenShelter/concepts/
 
-## Publishing
+All pages under the previous `/concepts/<name>.html` paths redirect into the relevant section of the unified inventory hub. The standalone concept gallery is retired.
 
-GitHub Pages content: `main` branch, `/docs` folder. Public gallery has its own entry point at `docs/concepts/index.html`.
+## Scope and project requirements
 
-GitHub Pages is enabled. The publishing source must target the `main` branch and the `/docs` directory. See [Pages settings](https://github.com/Nate27624/OpenShelter/settings/pages).
+The [Open Shelter project brief](./docs/) asks for a long-term, user-friendly way to record **donations received** and **supplies distributed**, monitor **low stock**, track **expiring supplies**, and choose which supply needs may be **public**. The current shelter [Needs List](https://theopenshelter.org/needs-list/) already explains donation categories and links to an Amazon list. The prototype is intended to complement that website, **not replace it**.
 
-After it publishes, the gallery will be available at:
+The application now has one interconnected workflow:
 
-https://nate27624.github.io/OpenShelter/concepts/
+- **Overview:** Inventory counts, critical shortages, near-expiration batches, activity, and quick intake.
+- **Inventory:** Searchable categories, quantities, storage locations, public/private indicators and adjustments.
+- **Receive donations:** One-click common items or detailed receipt; supports new supply types and optional expiration batches.
+- **Distribute supplies:** Item, quantity and reason; avoids negative stock.
+- **Alerts & expiration:** Item-specific thresholds and batch-level expiration watch.
+- **Public needs:** Donor-facing needs preview with staff-only eligibility toggles.
+- **Activity & settings:** Transaction history, physical stock reconciliation, and minimum quantity controls.
 
-Each UI has its own URL, such as:
+## Technical approach
 
-https://nate27624.github.io/OpenShelter/concepts/04-quick-intake.html
+This is a GitHub Pages-hosted **demonstration**, written in vanilla HTML/CSS/JavaScript. The pages require no build tooling or backend. The mock inventory is stored only in browser `localStorage` and is **not shared between people, devices or browsers**. Reset using the left navigation control. **Do not enter real or sensitive data.**
 
-## What it contains
+Proposed production architecture: retain the existing WordPress site for the public donor experience; add an approved public needs widget; create a secure, authenticated inventory API and staff UI with role-based access, server-side audit log, and reliable reconciliation of batches and quantity movements. Do not publish private inventory through GitHub Pages.
 
-Twenty dedicated concept webpages covering dashboard, inventory list, categories, one-click and detailed donation intake, distribution, count corrections, low stock alerts, expiration batches, publication controls, public needs, approval flows, QR-assisted drop-offs, photo catalog, shelf locator, CSV preview, inventory history, threshold settings, guided intake and volunteer actions.
+## Files
 
-The `docs/assets/app.js` and `docs/assets/style.css` files are shared by all concepts. There are no external dependencies or remote APIs. Demo interactions share state via localStorage on the same browser and can be reset from the top bar.
+- `docs/concepts/index.html`: public unified app entry point.
+- `docs/assets/app.js`: state, inventory logic and seven integrated sections.
+- `docs/assets/style.css`: visual style and responsive layout.
+- `docs/index.html`: redirect to unified entry point.
+- `docs/concepts/01-*.html` to `20-*.html`: backwards-compatible redirects only, **not** separate experiences.
 
-The user-provided project PDF and the shelter's current public website inform this prototype. Any real integration will require approval and a secure inventory backend.
+## GitHub Pages setup
 
-## Visual design alignment
+The repository is published from `main` / `docs`. See [repository Pages settings](https://github.com/Nate27624/OpenShelter/settings/pages). All prototype data and quantity values are fictional.
 
-The prototype retains the official Open Shelter house mark and links to the original WordPress website. A single, unified stylesheet (`docs/assets/style.css`) now defines typography, branded accent colors, gallery cards, forms, tables, alerts, keyboard focus styles, and responsive breakpoints. The public gallery has a prominent hero and two distinct review paths: donor-facing and staff-facing concepts.
+## Staff validation before implementation
 
-**Design boundary:** This is a deliberate, independently authored design proposal informed by the existing WordPress/Astra website, not a pixel-identical copy of the site's installed theme. The staff designs remain fictional public mockups, not real inventory tools.
-
-## Review
-
-Open `https://nate27624.github.io/OpenShelter/concepts/` to explore all 20 unique HTML URLs. Internal links move between concepts. The examples share only browser-local test data. Reload the site and use **Reset demo** to restore defaults when needed.
+Confirm actual item taxonomy and storage labels, which items need batch expiration tracking, minimum quantities, how staff approve a public need, who may edit counts and thresholds, and whether one-click inventory actions are usable during a busy donation shift.
