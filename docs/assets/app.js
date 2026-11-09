@@ -4,7 +4,6 @@ const root=document.getElementById("app");
 const storageKey="openshelter-unified-inventory-demo-v2";
 const sections=[
  ["public","Public facing","♥"],
- ["overview","Overview","▦"],
  ["inventory","Inventory","▤"],
  ["receive","Receive donations","＋"],
  ["distribute","Distribute supplies","↗"],
@@ -64,7 +63,8 @@ function normalizeStockLocations(){
  data.locations=[...known].sort((a,b)=>a.localeCompare(b));
 }
 normalizeStockLocations();
-let section=location.hash==="#admin"?"overview":sections.some(s=>"#"+s[0]===location.hash)?location.hash.slice(1):"public";
+if(location.hash==="#overview")location.hash="#inventory";
+let section=location.hash==="#admin"?"inventory":sections.some(s=>"#"+s[0]===location.hash)?location.hash.slice(1):"public";
 let search="",filter="All",stockFilter="All",publicSearch="",publicCategory="All",purchaseItemId=null,purchaseFeedback="",noticeTimer;
 const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const get=id=>data.items.find(x=>x.id===id);
@@ -155,7 +155,6 @@ return `<a href="#main" class="skip-link">Skip to inventory content</a>
 }
 function shell(){
 const meta={
-overview:["Overview","Track donations, distributions, shortages, and expiration dates in one place."],
 inventory:["Inventory","View current stock quantities, storage locations, and which items need replenishing."],
 receive:["Receive donations","Record items as they arrive using the detailed intake form."],
 distribute:["Distribute supplies","Record the supplies given out through day services and outreach."],
@@ -201,21 +200,6 @@ function expiryRows(limit=99){
 }
 function recentRows(limit=6){
  return data.history.slice(0,limit).map(e=>`<div class="history-row"><span class="movement-type ${e.change<0?"outbound":"inbound"}">${e.kind==="Relocation"?"MOVE":e.kind==="Correction"?"ADJ":e.change<0?"OUT":"IN"}</span><span class="history-description"><strong>${esc(e.kind)} · ${esc(get(e.item)?.name||e.item)}</strong><small>${esc(e.time)} · ${esc(e.note||"No note")}</small></span><b class="${e.change<0?"negative":"positive"}">${e.change>0?"+":""}${e.change}</b></div>`).join("")||`<div class="empty-state">No recorded activity.</div>`;
-}
-function overview(){
- const next=expiring().filter(l=>days(l.expiry)<=30).length;
- const reports=pendingReports().length;
- return `${reports?`<div class="pending-overview-note"><strong>${reports} purchase ${reports===1?"report is":"reports are"} awaiting receipt.</strong> <button type="button" data-go="receive" class="text-link">Review pending donations →</button></div>`:""}<div class="metrics-grid">${stat(available().toLocaleString(),"Units in stock","Across all categories")}
- ${stat(data.items.length,"Tracked items","Available supply types")}
- ${stat(shortage().length,"Low-stock alerts","Items to replenish","warning")}
- ${stat(next,"Expiring batches","Within the next 30 days","subtle")}</div>
- <div class="dashboard-grid">
- <section class="panel overview-attention">${title("Needs attention",`<button class="text-link" data-go="alerts">View all alerts →</button>`)}${urgentRows(4)}</section>
- <section class="panel overview-expiration">${title("Expiration watch",`<button class="text-link" data-go="alerts">Review batches →</button>`)}${expiryRows(3)}</section>
- </div>
- <div class="dashboard-grid follow-grid">
- <section class="panel">${title("Recent activity",`<button class="text-link" data-go="history">Full history →</button>`)}${recentRows(4)}</section>
- </div>`;
 }
 function stockRows(){
  const rows=data.items.filter(x=>(filter==="All"||x.cat===filter)&&(stockFilter==="All"||(stockFilter==="Low stock"?atRisk(x):stockFilter==="Public"?x.public:!x.public))&&`${x.name} ${x.cat} ${locationSummary(x)}`.toLowerCase().includes(search.toLowerCase()));
@@ -388,9 +372,9 @@ function settings(){
  </div></div>`;
 }
 
-function view(){return ({overview,inventory,receive,distribute,alerts,public:publicNeeds,history:settings}[section]||overview)()}
+function view(){return ({inventory,receive,distribute,alerts,public:publicNeeds,history:settings}[section]||inventory)()}
 function render(){root.innerHTML=shell();}
-function go(id){if(id!=="admin"&&!sections.some(x=>x[0]===id))return;section=id==="admin"?"overview":id;location.hash=id;render();window.scrollTo?.({top:0,behavior:"auto"})}
+function go(id){if(id!=="admin"&&id!=="overview"&&!sections.some(x=>x[0]===id))return;section=id==="admin"||id==="overview"?"inventory":id;location.hash=id==="overview"?"inventory":id;render();window.scrollTo?.({top:0,behavior:"auto"})}
 document.addEventListener("click",e=>{
  const nav=e.target.closest("[data-go]");
  if(nav){e.preventDefault();go(nav.dataset.go);return}
@@ -531,6 +515,6 @@ document.addEventListener("submit",e=>{
   x.min=min;save();render();notify("Low-stock threshold updated for "+x.name);
  }
 });
-window.addEventListener("hashchange",()=>{const route=location.hash.slice(1),id=route==="admin"?"overview":route;if((route==="admin"||sections.some(x=>x[0]===route))&&id!==section){section=id;render();}});
+window.addEventListener("hashchange",()=>{const route=location.hash.slice(1);if(route==="overview"){location.hash="inventory";return}const id=route==="admin"?"inventory":route;if((route==="admin"||sections.some(x=>x[0]===route))&&id!==section){section=id;render();}});
 render();
 })();
