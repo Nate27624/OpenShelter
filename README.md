@@ -13,12 +13,16 @@ The [Open Shelter project brief](./docs/) asks for a long-term, user-friendly wa
 The application has **two distinct views** in its topmost navigation: **Public Facing** (default, `#public`) displays only the visitor inventory and purchase-report workflow, while **Admin View** (`#admin`) opens the management demonstration with its own Overview, Inventory, Receive, Distribute, Alerts, and Activity & Corrections tabs. The public view does not display the management navigation or admin controls.
 
 - **Overview:** Inventory counts, critical shortages, near-expiration batches, activity, and quick intake.
-- **Inventory:** Searchable categories, quantities, storage locations, public/private indicators and adjustments.
-- **Receive donations:** A pending purchase-reports queue at the top, with staff demo actions to **Mark received** (one-time stock increase and audit entry) or **Dismiss** (no stock change), followed by one-click common items and detailed intake for new supply types and expiration batches.
-- **Distribute supplies:** Item, quantity and reason; avoids negative stock.
+- **Inventory:** The single canonical item list drives receiving, distribution, alerts and Public Facing. Each item has one total derived from its per-location quantities. The Inventory tab shows shelf breakdowns, supports location search, and offers adding, renaming, removing unused locations, and relocating quantities without changing the item total.
+- **Receive donations:** A pending purchase-reports queue at the top, with staff demo actions to **Mark received** (one-time stock increase and audit entry) or **Dismiss** (no stock change), followed by quick intake and a detailed form. The detailed form uses the canonical item dropdown, supports new supply types, and includes an **optional storage location** dropdown with an inline **Add a new location** option. Unspecified locations are tracked as **Unassigned** rather than guessed.
+- **Distribute supplies:** Canonical item selection, quantity and reason, with an optional source shelf dropdown. If no location is provided, the demo deducts from unassigned stock first, then stored shelves in alphabetical order; selecting a shelf avoids implicit shelf allocation. Distribution cannot make a quantity negative.
 - **Alerts & expiration:** Low-stock alerts, adjustable item-specific minimum thresholds, and batch-level expiration watch.
 - **Public Facing (public landing view):** A clean visitor inventory table grouped by category, with **Item and on-hand count → More needed → I've purchased this** in consistent, aligned columns. The public count appears beneath each item name with **On the way** beneath it. The raw target number is not shown publicly: **More needed** is calculated as `max(0, minimum stock target - on hand - donor-reported pending)`. Unit labels are intentionally omitted in the public view until a trustworthy item/unit catalog is available. Search, category filtering, purchase reporting, and privacy controls remain supported; pending quantities are unverified.
 - **Activity & Corrections:** Transaction history and a unified per-item editor. Select a supply from the physical-count correction dropdown, adjust its recorded count or public-visibility toggle, and save both settings together. The Public Facing preview then reflects saved visibility and stock updates.
+
+## Canonical inventory data
+
+Existing demo inventory is migrated in place from a single `location` string per item into per-item `stockLocations` quantities. Item `qty` is recalculated from the location entries after every stock operation. Staff can receive the same item at multiple shelves without duplicating the canonical item, and Inventory exposes the breakdown. The location-name registry is shared across receiving, distribution and stock relocation. New item types default to private visibility. These fields live in the current browser's demo data, not a backend inventory service.
 
 ## Technical approach
 
