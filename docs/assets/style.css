@@ -315,6 +315,13 @@ p{margin:0 0 1em}
 .inventory-total-count{display:block;font-size:21px;font-weight:700;color:#303030;font-variant-numeric:tabular-nums;line-height:1.4}
 .inventory-total-subtitle{display:block;margin-top:5px;font-size:11px;line-height:1.4;color:#777}
 .inventory-table-editing td:nth-child(5){min-width:260px;width:27%}
+.inventory-reported-count{min-width:106px;white-space:nowrap;text-align:center;font-variant-numeric:tabular-nums;color:#666}
+.inventory-reported-count strong{color:#624a38}
+.inventory-table-editing.inventory-has-reported td:nth-child(5){min-width:106px;width:9%}
+.inventory-table-editing.inventory-has-reported td:nth-child(6){min-width:260px;width:27%}
+.inventory-table-editing.inventory-has-reported td:nth-child(7){min-width:90px;width:auto}
+.inventory-table-editing.inventory-has-reported td:nth-child(8){min-width:100px;width:auto}
+.inventory-table-editing.inventory-has-reported td:nth-child(9){min-width:77px;width:auto}
 .inventory-location-counts{display:grid;gap:7px}
 .inventory-location-editor{display:grid;grid-template-columns:minmax(65px,1fr) 84px;gap:8px;align-items:center}
 .inventory-location-editor span{font-size:12px;line-height:1.4;color:#444;overflow-wrap:anywhere}
