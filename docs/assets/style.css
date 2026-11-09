@@ -432,7 +432,7 @@ p{margin:0 0 1em}
 .dashboard-grid > .overview-attention{
   border-top-color:#b5402c;
 }
-.dashboard-grid.follow-grid > .panel:first-child{
+.dashboard-grid > .overview-expiration{
   border-top-color:#a66a37;
 }
 .dashboard-grid > .panel > .block-heading{
