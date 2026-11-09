@@ -18,7 +18,7 @@ The application now has one interconnected workflow:
 - **Distribute supplies:** Item, quantity and reason; avoids negative stock.
 - **Alerts & expiration:** Low-stock alerts, adjustable item-specific minimum thresholds, and batch-level expiration watch.
 - **Public Facing:** Searchable, category-filtered visitor availability preview showing public-enabled supplies with their quantities on hand and **Available / Limited / Not available** statuses. Private items and shelf locations stay hidden; sample quantities update after intake, distribution, or corrections. The prototype tells visitors to confirm availability with the shelter before traveling.
-- **Activity & Corrections:** Transaction history, physical stock reconciliation, and staff controls for public visibility. Toggling visibility immediately updates the Public Facing preview.
+- **Activity & Corrections:** Transaction history and a unified per-item editor. Select a supply from the physical-count correction dropdown, adjust its recorded count or public-visibility toggle, and save both settings together. The Public Facing preview then reflects saved visibility and stock updates.
 
 ## Technical approach
 
