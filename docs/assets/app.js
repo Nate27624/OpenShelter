@@ -240,10 +240,12 @@ function publicNeedsRows(){
   const pending=pendingFor(x.id),needed=Math.max(0,x.min-x.qty-pending),opened=purchaseItemId===x.id;
   return `<div class="public-stock-row">
    <div class="public-stock-row-main">
-    <div class="public-stock-item"><h4>${esc(x.name)}</h4></div>
-    <div class="public-stock-figure public-stock-have">
-     <div class="public-stock-number" aria-label="At shelter: ${x.qty} ${esc(x.unit)}"><span class="public-stock-mobile-label">At shelter</span><strong>${x.qty.toLocaleString()}</strong><span class="public-stock-unit">${esc(x.unit)}</span></div>
-     <small class="public-stock-subline"><strong>${pending.toLocaleString()}</strong> on the way</small>
+    <div class="public-stock-item">
+     <h4>${esc(x.name)}</h4>
+     <div class="public-stock-figure public-stock-have">
+      <div class="public-stock-number" aria-label="At shelter: ${x.qty} ${esc(x.unit)}"><strong>${x.qty.toLocaleString()}</strong><span class="public-stock-unit">${esc(x.unit)} on hand</span></div>
+      <small class="public-stock-subline"><strong>${pending.toLocaleString()}</strong> on the way</small>
+     </div>
     </div>
     <div class="public-stock-figure public-stock-goal">
      <div class="public-stock-number public-stock-target" aria-label="Stock goal: ${x.min} ${esc(x.unit)}"><span class="public-stock-mobile-label">Stock goal</span><strong>${x.min.toLocaleString()}</strong></div>
@@ -264,7 +266,7 @@ function publicNeedsRows(){
   </div>`;
  };
  return `<div class="public-stock-list">
-  <div class="public-stock-column-head" aria-hidden="true"><span>Item</span><span>At shelter</span><span>Stock goal</span><span>Donate</span></div>
+  <div class="public-stock-column-head" aria-hidden="true"><span>Item &amp; stock</span><span>Stock goal</span><span>Donate</span></div>
   ${cats.map(cat=>{
    const rows=items.filter(x=>x.cat===cat).sort((a,b)=>{
     const needA=Math.max(0,a.min-a.qty-pendingFor(a.id)),needB=Math.max(0,b.min-b.qty-pendingFor(b.id));
