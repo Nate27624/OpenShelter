@@ -239,7 +239,7 @@ function receive(){
  <p class="tiny muted">Browser-only demonstration: reports from other visitors or devices do not reach this queue.</p>
  </section><div class="receive-layout">
  <section class="panel">
- ${title("Fast intake")}<p class="muted">One click adds a standard unit to stock. No unnecessary fields for routine donations.</p>
+ ${title("Fast intake")}<p class="muted">One click adds a standard unit to stock (location unassigned). Use detailed intake when the shelf is known.</p>
  <div class="fast-items">${["socks","coats","soup","water","hygiene","deodorant"].map(id=>{const x=get(id);return `<div class="fast-row"><span><strong>${esc(x.name)}</strong><small>${x.qty} ${esc(x.unit)} on hand</small></span><button class="btn primary small" data-action="quick" data-id="${id}">＋ 1 ${esc(x.unit)}</button></div>`}).join("")}</div>
  <p class="tiny muted">Need a larger amount? Use the detailed form. All submissions update the same inventory.</p>
  </section>
@@ -250,8 +250,11 @@ function receive(){
  <div class="field"><label for="new-name">New item name</label><input id="new-name" name="newName" placeholder="e.g. Winter hats"></div>
  <div class="form-grid"><div class="field"><label for="new-cat">Category</label><select id="new-cat" name="newCat">${["Clothing","Food","Hygiene","Medical","Agency"].map(c=>`<option>${c}</option>`).join("")}</select></div>
  <div class="field"><label for="new-unit">Unit</label><input id="new-unit" name="newUnit" placeholder="e.g. pieces"></div></div>
- <div class="form-grid"><div class="field"><label for="new-min">Low-stock threshold</label><input id="new-min" type="number" name="newMin" min="0" value="10"></div><div class="field"><label for="new-location">Storage shelf</label><input id="new-location" name="newLocation" value="A1"></div></div></div>
+ <div class="field"><label for="new-min">Low-stock threshold</label><input id="new-min" type="number" name="newMin" min="0" value="10"></div></div>
  <div class="form-grid"><div class="field"><label for="receive-qty">Quantity received</label><input id="receive-qty" name="qty" type="number" min="1" step="1" value="12" required></div><div class="field"><label for="receive-exp">Expiration date <span class="optional">(optional)</span></label><input id="receive-exp" name="expiry" type="date"></div></div>
+ <div class="field"><label for="receive-location">Storage location <span class="optional">(optional)</span></label><select id="receive-location" name="location"><option value="">No location specified</option>${locationOptions()}<option value="__add">＋ Add a new location…</option></select>
+ <small class="location-help">Leave blank if the shelf is unknown. Inventory will track it as unassigned.</small></div>
+ <div class="new-location-fields" id="receive-add-location" hidden><div class="field"><label for="receive-new-location">New location name</label><input id="receive-new-location" name="newLocation" maxlength="60" placeholder="e.g. Upstairs closet"></div></div>
  <div class="field"><label for="receive-note">Note <span class="optional">(optional)</span></label><textarea id="receive-note" name="note" placeholder="Condition, source, special handling…"></textarea></div>
  <button type="submit" class="btn primary">Record donation →</button></form>
  </section></div>
