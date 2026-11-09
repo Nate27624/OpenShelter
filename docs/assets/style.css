@@ -1052,6 +1052,7 @@ p{margin:0 0 1em}
 }
 .public-stock-goal{padding-top:34px;min-width:0}
 .public-stock-target strong{font-size:24px;color:#484848;font-weight:600}
+.public-stock-needed-text{font-size:12px;font-weight:600;white-space:nowrap}
 .public-stock-target.public-stock-needed.needs-more strong{color:#a13f2d}
 .public-stock-target.public-stock-needed.target-met strong{color:#43724c}
 .public-stock-mobile-label{display:none}
