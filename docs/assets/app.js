@@ -68,7 +68,7 @@ let section=location.hash==="#admin"?"inventory":sections.some(s=>"#"+s[0]===loc
 let search="",filter="All",stockFilter="All",publicSearch="",publicCategory="All",purchaseItemId=null,purchaseFeedback="",pendingReceiptId=null,inventoryEditMode=false,inventoryAddMode=false,inventoryScrollX=0,inventoryScrollY=0,noticeTimer;
 const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const get=id=>data.items.find(x=>x.id===id);
-const atRisk=x=>x.qty<=x.min;
+const atRisk=x=>x.qty<x.min;
 const shortage=()=>data.items.filter(atRisk).sort((a,b)=>(a.qty-a.min)-(b.qty-b.min));
 const available=()=>data.items.reduce((sum,x)=>sum+x.qty,0);
 const days=iso=>Math.ceil((new Date(iso+"T12:00:00")-new Date().setHours(12,0,0,0))/86400000);
@@ -84,7 +84,8 @@ const validLocation=name=>name.length>=1&&name.length<=60&&!/[\x00-\x1f\x7f]/.te
 const save=()=>{try{localStorage.setItem(storageKey,JSON.stringify(data))}catch{}};
 const now=()=>new Date().toLocaleString([],{month:"short",day:"numeric",hour:"numeric",minute:"2-digit"});
 const opt=(selected)=>data.items.map(x=>`<option value="${esc(x.id)}" ${x.id===selected?"selected":""}>${esc(x.name)} (${x.qty.toLocaleString()})</option>`).join("");
-const badge=x=>`<span class="status ${x.qty===0?"out":atRisk(x)?"low":"ok"}">${x.qty===0?"Out of stock":atRisk(x)?"Low stock":"In stock"}</span>`;
+const statusMarkup=(qty,min)=>`<span class="status ${qty===0?"out":qty<min?"low":"ok"}">${qty===0?"Out of stock":qty<min?"Low stock":"In stock"}</span>`;
+const badge=x=>statusMarkup(x.qty,x.min);
 function notify(text){const box=document.getElementById("toast");if(!box)return;box.textContent=text;box.classList.add("show");clearTimeout(noticeTimer);noticeTimer=setTimeout(()=>box.classList.remove("show"),2600)}
 function movement(kind,id,change,note){
  data.history.unshift({id:"TX-"+Date.now().toString(36),kind,item:id,change,note:String(note||""),time:now()});data.history=data.history.slice(0,200);
@@ -238,14 +239,14 @@ function stockRows(){
    <td><input form="${esc(formId)}" type="text" name="name" value="${esc(x.name)}" maxlength="80" required aria-label="Supply name for ${esc(x.name)}" placeholder="Supply name"></td>
    <td><select form="${esc(formId)}" name="category" required aria-label="Category for ${esc(x.name)}">${categoryOptions(x.cat)}</select></td>
    <td><output class="inventory-total-count" id="inventory-total-${esc(formId)}" aria-label="Total count for ${esc(x.name)}">${x.qty.toLocaleString()}</output><small class="inventory-total-subtitle">Sum of locations</small></td>
-   <td><input form="${esc(formId)}" type="number" name="min" value="${x.min}" min="0" max="1000000" step="1" required aria-label="Stock minimum for ${esc(x.name)}"></td>
+   <td><input form="${esc(formId)}" type="number" name="min" value="${x.min}" min="0" max="1000000" step="1" required data-inventory-minimum aria-label="Stock minimum for ${esc(x.name)}"></td>
    <td class="location-cell">
     <div class="inventory-location-counts">
      ${locationBalances(x).map(entry=>`<label class="inventory-location-editor"><span>${esc(entry.location)}</span><input form="${esc(formId)}" type="number" name="locationQty:${encodeURIComponent(entry.location)}" value="${entry.qty}" min="0" max="1000000" step="1" data-inventory-count aria-label="Count at ${esc(entry.location)} for ${esc(x.name)}"></label>`).join("")}
     </div>
     <div class="inventory-location-add"><select form="${esc(formId)}" name="addLocation" data-inventory-location-choice aria-label="Assign another location to ${esc(x.name)}"><option value="">＋ Add location…</option>${["Unassigned",...data.locations].filter(loc=>!x.stockLocations.some(entry=>entry.location===loc)).map(loc=>`<option value="${esc(loc)}">${esc(loc)}</option>`).join("")}<option value="__new">＋ New storage location…</option></select><input form="${esc(formId)}" name="addLocationQty" type="number" value="0" min="0" max="1000000" step="1" data-inventory-count aria-label="Quantity at new location for ${esc(x.name)}"><input form="${esc(formId)}" type="text" name="newLocationName" maxlength="60" placeholder="New location name" aria-label="New location name for ${esc(x.name)}" data-inventory-new-location hidden></div>
    </td>
-   <td>${badge(x)}</td>
+   <td id="inventory-status-${esc(formId)}">${badge(x)}</td>
    <td><select form="${esc(formId)}" name="visibility" aria-label="Public visibility of ${esc(x.name)}"><option value="private" ${!x.public?"selected":""}>Private</option><option value="public" ${x.public?"selected":""}>Public</option></select></td>
    <td><form id="${esc(formId)}" data-inventory-edit="${esc(x.id)}"></form><button type="submit" form="${esc(formId)}" class="btn primary small">Save</button></td>
   </tr>`;
@@ -254,9 +255,9 @@ function stockRows(){
   <td><input form="inventory-add-form" id="inventory-add-name" name="name" type="text" maxlength="80" required placeholder="New supply" aria-label="New supply name"></td>
   <td><select form="inventory-add-form" name="category" required aria-label="Category for new supply"><option value="" selected disabled>Choose category…</option>${categoryOptions("")}</select></td>
   <td><output class="inventory-total-count" id="inventory-total-inventory-add-form" aria-label="Total count for new supply">0</output><small class="inventory-total-subtitle">Sum of locations</small></td>
-  <td><input form="inventory-add-form" name="min" type="number" min="0" max="1000000" value="10" step="1" required aria-label="Minimum count for new supply"></td>
+  <td><input form="inventory-add-form" name="min" type="number" min="0" max="1000000" value="10" step="1" required data-inventory-minimum aria-label="Minimum count for new supply"></td>
   <td class="location-cell"><div class="inventory-location-add inventory-location-add-new"><select form="inventory-add-form" name="location" data-inventory-location-choice aria-label="Storage location for new supply"><option value="">Unassigned</option>${locationOptions()}<option value="__new">＋ New storage location…</option></select><input form="inventory-add-form" name="newLocationQty" type="number" min="0" max="1000000" value="0" step="1" required data-inventory-count aria-label="Count at selected location for new supply"><input form="inventory-add-form" type="text" name="newLocationName" maxlength="60" placeholder="New location name" aria-label="New storage location name" data-inventory-new-location hidden></div><small>Save, then edit to assign counts at additional locations.</small></td>
-  <td><small>New item</small></td>
+  <td id="inventory-status-inventory-add-form">${statusMarkup(0,10)}</td>
   <td><select form="inventory-add-form" name="visibility" aria-label="Public visibility for new supply"><option value="private" selected>Private</option><option value="public">Public</option></select></td>
   <td><form id="inventory-add-form"></form><button type="submit" form="inventory-add-form" class="btn primary small">Add item</button></td>
  </tr>`;
@@ -323,7 +324,7 @@ function distribute(){
  <p class="tiny muted">Inventory cannot go below zero. Dated stock is deducted from the nearest non-expired batch first when possible.</p></section></div>`;
 }
 function alerts(){
- return `<div class="metrics-grid">${stat(shortage().length,"Low-stock items","At or below minimum","warning")}${stat(shortage().filter(x=>x.qty===0).length,"Out of stock","No units remaining","warning")}${stat(expiring().filter(x=>days(x.expiry)<=30).length,"Expiring soon","Within 30 days")}${stat(data.items.filter(x=>!atRisk(x)).length,"Healthy stock","Above minimum","success")}</div>
+ return `<div class="metrics-grid">${stat(shortage().length,"Low-stock items","Below minimum","warning")}${stat(shortage().filter(x=>x.qty===0).length,"Out of stock","No units remaining","warning")}${stat(expiring().filter(x=>days(x.expiry)<=30).length,"Expiring soon","Within 30 days")}${stat(data.items.filter(x=>!atRisk(x)).length,"Healthy stock","Above minimum","success")}</div>
  <div class="split"><section class="panel">${title("Low-stock watchlist")}<p class="muted">Each item has its own threshold. Receiving a donation updates the list immediately.</p>${urgentRows()}</section>
  <section class="panel">${title("Expiration watch")}<p class="muted">Batches carry their own expiration dates, even when they contain the same item.</p>${expiryRows()}<div class="note" style="margin-top:17px">This is an alerting preview, not a safety determination. Real procedures for expired food and medical supplies must be agreed with staff.</div></section></div>
   <section class="panel alerts-threshold-panel">${title("Minimum stock settings")}<p class="muted">Adjust when an item should trigger a low-stock alert.</p>
@@ -467,18 +468,23 @@ function previewInventoryLocationTotal(input){
  const formId=input.getAttribute("form");
  if(!formId)return;
  const form=document.getElementById(formId),output=document.getElementById("inventory-total-"+formId);
+ const status=document.getElementById("inventory-status-"+formId);
  if(!form||!output)return;
  const counts=Array.from(form.elements).filter(field=>field.hasAttribute("data-inventory-count"));
  const values=counts.map(field=>String(field.value));
- if(values.some(value=>!/^[0-9]+$/.test(value)||!Number.isSafeInteger(Number(value)))){
-  output.textContent="—";return
- }
- const sum=values.reduce((total,value)=>total+Number(value),0);
- output.textContent=sum<=1000000?sum.toLocaleString():"Over limit";
+ const validCounts=values.every(value=>/^[0-9]+$/.test(value)&&Number.isSafeInteger(Number(value)));
+ const sum=validCounts?values.reduce((total,value)=>total+Number(value),0):NaN;
+ const validTotal=Number.isSafeInteger(sum)&&sum<=1000000;
+ output.textContent=!validCounts?"—":validTotal?sum.toLocaleString():"Over limit";
+ if(!status)return;
+ const minField=Array.from(form.elements).find(field=>field.hasAttribute("data-inventory-minimum"));
+ const rawMin=minField?String(minField.value):"";
+ const validMin=/^[0-9]+$/.test(rawMin)&&Number.isSafeInteger(Number(rawMin))&&Number(rawMin)<=1000000;
+ status.innerHTML=validTotal&&validMin?statusMarkup(sum,Number(rawMin)):"—";
 }
 document.addEventListener("input",e=>{
  if(e.target.id==="inventory-scroll-range"){const box=document.getElementById("inventory-table-scroll");if(box){box.scrollLeft=Number(e.target.value);inventoryScrollX=box.scrollLeft}}
- if(e.target.matches?.("[data-inventory-count]"))previewInventoryLocationTotal(e.target);
+ if(e.target.matches?.("[data-inventory-count], [data-inventory-minimum]"))previewInventoryLocationTotal(e.target);
  if(e.target.id==="stock-search"){search=e.target.value;const pane=document.getElementById("inventory-results");if(pane)pane.innerHTML=stockRows();}
  if(e.target.id==="public-item-search"){publicSearch=e.target.value;const pane=document.getElementById("public-preview");if(pane)pane.innerHTML=publicNeedsRows();}
 });
