@@ -240,10 +240,14 @@ function stockRows(){
    <td><input form="${esc(formId)}" type="text" name="name" value="${esc(x.name)}" maxlength="80" required aria-label="Supply name for ${esc(x.name)}" placeholder="Supply name">
     <input form="${esc(formId)}" type="text" name="unit" value="${esc(x.unit)}" maxlength="30" required aria-label="Unit for ${esc(x.name)}" placeholder="Unit, e.g. pieces" class="inventory-unit-input"></td>
    <td><input form="${esc(formId)}" type="text" name="category" value="${esc(x.cat)}" maxlength="40" required list="inventory-category-options" aria-label="Category for ${esc(x.name)}"></td>
-   <td><input form="${esc(formId)}" type="number" name="qty" value="${x.qty}" min="0" max="1000000" step="1" required aria-label="Total count for ${esc(x.name)}"></td>
+   <td><output class="inventory-total-count" id="inventory-total-${esc(formId)}" aria-label="Total count for ${esc(x.name)}">${x.qty.toLocaleString()}</output><small class="inventory-total-subtitle">Sum of locations</small></td>
    <td><input form="${esc(formId)}" type="number" name="min" value="${x.min}" min="0" max="1000000" step="1" required aria-label="Stock minimum for ${esc(x.name)}"></td>
-   <td class="location-cell"><small class="inventory-location-current">${esc(locationSummary(x))}</small>
-    <select form="${esc(formId)}" name="moveTo" aria-label="Move all ${esc(x.name)} stock to a location"><option value="">Keep current locations</option><option value="Unassigned">Move all to Unassigned</option>${data.locations.map(loc=>`<option value="${esc(loc)}">Move all to ${esc(loc)}</option>`).join("")}</select></td>
+   <td class="location-cell">
+    <div class="inventory-location-counts">
+     ${locationBalances(x).map(entry=>`<label class="inventory-location-editor"><span>${esc(entry.location)}</span><input form="${esc(formId)}" type="number" name="locationQty:${encodeURIComponent(entry.location)}" value="${entry.qty}" min="0" max="1000000" step="1" data-inventory-count aria-label="Count at ${esc(entry.location)} for ${esc(x.name)}"></label>`).join("")}
+    </div>
+    ${(["Unassigned",...data.locations].filter(loc=>!x.stockLocations.some(entry=>entry.location===loc))).length?`<div class="inventory-location-add"><select form="${esc(formId)}" name="addLocation" aria-label="Assign another location to ${esc(x.name)}"><option value="">＋ Add location…</option>${["Unassigned",...data.locations].filter(loc=>!x.stockLocations.some(entry=>entry.location===loc)).map(loc=>`<option value="${esc(loc)}">${esc(loc)}</option>`).join("")}</select><input form="${esc(formId)}" name="addLocationQty" type="number" value="0" min="0" max="1000000" step="1" data-inventory-count aria-label="Quantity at new location for ${esc(x.name)}"></div>`:""}
+   </td>
    <td>${badge(x)}</td>
    <td><select form="${esc(formId)}" name="visibility" aria-label="Public visibility of ${esc(x.name)}"><option value="private" ${!x.public?"selected":""}>Private</option><option value="public" ${x.public?"selected":""}>Public</option></select></td>
    <td><form id="${esc(formId)}" data-inventory-edit="${esc(x.id)}"></form><button type="submit" form="${esc(formId)}" class="btn primary small">Save</button></td>
@@ -253,19 +257,19 @@ function stockRows(){
   <td><input form="inventory-add-form" id="inventory-add-name" name="name" type="text" maxlength="80" required placeholder="New supply" aria-label="New supply name">
    <input form="inventory-add-form" name="unit" type="text" maxlength="30" required placeholder="Unit (e.g. pieces)" aria-label="Unit for new supply" class="inventory-unit-input"></td>
   <td><input form="inventory-add-form" name="category" type="text" maxlength="40" required list="inventory-category-options" placeholder="Category" aria-label="Category for new supply"></td>
-  <td><input form="inventory-add-form" name="qty" type="number" min="0" max="1000000" value="0" step="1" required aria-label="Initial count for new supply"></td>
+  <td><output class="inventory-total-count" id="inventory-total-inventory-add-form" aria-label="Total count for new supply">0</output><small class="inventory-total-subtitle">Sum of locations</small></td>
   <td><input form="inventory-add-form" name="min" type="number" min="0" max="1000000" value="10" step="1" required aria-label="Minimum count for new supply"></td>
-  <td class="location-cell"><select form="inventory-add-form" name="location" aria-label="Storage location for new supply"><option value="">Unassigned</option>${locationOptions()}</select><small>Use Storage locations below to add a shelf.</small></td>
+  <td class="location-cell"><div class="inventory-location-add inventory-location-add-new"><select form="inventory-add-form" name="location" aria-label="Storage location for new supply"><option value="">Unassigned</option>${locationOptions()}</select><input form="inventory-add-form" name="newLocationQty" type="number" min="0" max="1000000" value="0" step="1" required data-inventory-count aria-label="Count at selected location for new supply"></div><small>Save, then edit to assign counts at additional locations.</small></td>
   <td><small>New item</small></td>
   <td><select form="inventory-add-form" name="visibility" aria-label="Public visibility for new supply"><option value="private" selected>Private</option><option value="public">Public</option></select></td>
   <td><form id="inventory-add-form"></form><button type="submit" form="inventory-add-form" class="btn primary small">Add item</button></td>
  </tr>`;
- return `${inventoryEditMode?categoryOptions:""}<div class="table-wrap"><table class="data-table inventory-table ${inventoryEditMode?"inventory-table-editing":""}"><thead><tr><th>Supply</th><th>Category</th><th>Available</th><th>Minimum</th><th>Location</th><th>Status</th><th>Visible</th>${inventoryEditMode?"<th>Save</th>":""}</tr></thead><tbody>
+ return `${inventoryEditMode?categoryOptions:""}<div class="table-wrap"><table class="data-table inventory-table ${inventoryEditMode?"inventory-table-editing":""}"><thead><tr><th>Supply</th><th>Category</th><th>Total count</th><th>Minimum</th><th>Location counts</th><th>Status</th><th>Visible</th>${inventoryEditMode?"<th>Save</th>":""}</tr></thead><tbody>
  ${rows.map(x=>inventoryEditMode?editable(x):`<tr><td><strong>${esc(x.name)}</strong></td><td>${esc(x.cat)}</td><td><b>${x.qty}</b> <small>${esc(x.unit)}</small></td><td>${x.min}</td><td class="location-cell">${esc(locationSummary(x))}</td><td>${badge(x)}</td><td><span class="visibility-chip ${x.public?"published":""}">${x.public?"Public":"Private"}</span></td></tr>`).join("")}
  ${inventoryEditMode&&inventoryAddMode?newRow:""}
  ${!rows.length&&!(inventoryEditMode&&inventoryAddMode)?`<tr><td colspan="${inventoryEditMode?8:7}" class="empty-state">No matching supplies. Clear a filter and try again.</td></tr>`:""}
  </tbody></table></div>
- <p class="table-foot">${rows.length} of ${data.items.length} supply types shown. ${inventoryEditMode?"Save each row to apply changes. An increased total goes to Unassigned unless you move all stock to a location; use Storage locations below for partial transfers.":"Edit this table to change supplies, stock counts, categories, units, minimums, locations, and public visibility."}</p>`;
+ <p class="table-foot">${rows.length} of ${data.items.length} supply types shown. ${inventoryEditMode?"Edit each location count, then save the row. Total count is calculated from all locations. Choose an additional location and quantity to assign stock there. Changes to stored counts are tracked in Activity log.":"Total count is the sum of every storage location. Edit the table to adjust counts at each location, item details, or public visibility."}</p>`;
 }
 function inventory(){
  return `<section class="panel">
