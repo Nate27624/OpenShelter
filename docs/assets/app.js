@@ -69,7 +69,7 @@ function pendingRows(){
  if(!pending.length)return `<p class="pending-empty">No donor purchase reports are awaiting confirmation.</p>`;
  return `<div class="pending-list">${pending.map(p=>{
   const x=get(p.item); if(!x)return "";
-  return `<div class="pending-row"><div class="pending-description"><strong>${esc(x.name)}</strong><small>${p.qty} ${esc(x.unit)} reported purchased · ${esc(p.time||"Recently reported")}${p.expected?" · Expected "+esc(p.expected):""}</small></div><span class="pending-tag">Awaiting receipt</span><div class="pending-actions"><button type="button" class="btn primary small" data-action="pending-receive" data-id="${esc(p.id)}">Mark received</button><button type="button" class="btn small" data-action="pending-dismiss" data-id="${esc(p.id)}">Dismiss</button></div></div>`;
+  return `<div class="pending-row"><div class="pending-description"><strong>${esc(x.name)}</strong><small>${p.qty} reported purchased · ${esc(p.time||"Recently reported")}${p.expected?" · Expected "+esc(p.expected):""}</small></div><span class="pending-tag">Awaiting receipt</span><div class="pending-actions"><button type="button" class="btn primary small" data-action="pending-receive" data-id="${esc(p.id)}">Mark received</button><button type="button" class="btn small" data-action="pending-dismiss" data-id="${esc(p.id)}">Dismiss</button></div></div>`;
  }).join("")}</div>`;
 }
 function changeStock(id,delta,kind,note){
@@ -356,7 +356,7 @@ document.addEventListener("submit",e=>{
   if(expected&&(!/^\d{4}-\d{2}-\d{2}$/.test(expected)||!Number.isFinite(Date.parse(expected+"T12:00:00"))||expected<day(0))){notify("Use a valid future arrival date.");return}
   data.pending.push({id:"PD-"+Date.now().toString(36)+"-"+Math.random().toString(36).slice(2,8),item:id,qty,expected,status:"pending",time:now(),createdAt:Date.now()});
   save();purchaseItemId=null;
-  purchaseFeedback="Purchase recorded in this browser demo: "+qty+" "+x.unit+" of "+x.name+" reported on the way. This has NOT been sent to the shelter. Staff confirmation is required before stock increases.";
+  purchaseFeedback="Purchase recorded in this browser demo: "+qty+" of "+x.name+" reported on the way. This has NOT been sent to the shelter. Staff confirmation is required before stock increases.";
   render();notify("Demo purchase report saved locally.");return
  }
  if(form.id==="receive-form"){
