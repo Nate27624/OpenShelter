@@ -259,6 +259,40 @@ p{margin:0 0 1em}
 .inventory-filters .field{margin-bottom:0}
 /* Directly editable inventory table; existing storage allocations remain canonical. */
 .inventory-header-actions{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+/* Inventory editing: the action column stays reachable and the horizontal
+   range control is visible at the top as rows scroll inside the grid. */
+.inventory-scroll-shell{min-width:0;width:100%;max-width:100%}
+.inventory-table-scroll{width:100%;max-width:100%;overflow-x:auto;overscroll-behavior-x:contain}
+.inventory-scroll-editing .inventory-table-scroll{
+ max-height:70vh;overflow:auto;scrollbar-gutter:stable;
+ scrollbar-width:auto;scrollbar-color:#999 #eee
+}
+.inventory-scroll-editing .inventory-table-scroll::-webkit-scrollbar{height:14px;width:12px}
+.inventory-scroll-editing .inventory-table-scroll::-webkit-scrollbar-thumb{background:#979797;border:3px solid #ededed;border-radius:8px}
+.inventory-scroll-controls{
+ display:flex;align-items:center;gap:11px;position:sticky;top:0;z-index:6;
+ background:#fafafa;border:1px solid #d6d6d6;border-bottom:0;padding:8px 12px;
+ font-size:12px;color:#585858;
+}
+.inventory-scroll-controls[hidden]{display:none!important}
+.inventory-scroll-controls>span{font-weight:600;white-space:nowrap}
+.inventory-scroll-controls input[type="range"]{flex:1;min-width:70px;max-width:none;accent-color:#8b4a39;cursor:ew-resize}
+.inventory-scroll-controls .mini-btn{padding:6px 11px;flex-shrink:0}
+.inventory-table-editing{border-collapse:separate;border-spacing:0}
+.inventory-table-editing th{position:sticky;top:0;z-index:2;background:#f5f5f5}
+.inventory-table-editing th:last-child,.inventory-table-editing td:last-child{
+ position:sticky;right:0;background:#fff;z-index:3;
+ box-shadow:-3px 0 8px -6px rgba(0,0,0,.35);
+ border-left:1px solid #e0e0e0
+}
+.inventory-table-editing th:last-child{z-index:4;background:#f5f5f5}
+.inventory-table-editing .inventory-new-row td:last-child{background:#faf8f7}
+@media(max-width:650px){
+ .inventory-scroll-controls{padding:7px;gap:6px}
+ .inventory-scroll-controls>span{font-size:11px}
+ .inventory-scroll-controls .mini-btn{padding:5px 9px}
+}
+
 .inventory-table-editing{min-width:1150px}
 .inventory-table-editing td{vertical-align:top;padding:12px 8px}
 .inventory-table-editing input,.inventory-table-editing select{
@@ -278,7 +312,6 @@ p{margin:0 0 1em}
 .inventory-table-editing td:nth-child(6){min-width:90px}
 .inventory-table-editing td:nth-child(7){min-width:100px}
 .inventory-table-editing td:nth-child(8){min-width:77px}
-.inventory-table-editing .inventory-unit-input{display:block;margin-top:6px}
 .inventory-total-count{display:block;font-size:21px;font-weight:700;color:#303030;font-variant-numeric:tabular-nums;line-height:1.4}
 .inventory-total-subtitle{display:block;margin-top:5px;font-size:11px;line-height:1.4;color:#777}
 .inventory-table-editing td:nth-child(5){min-width:260px;width:27%}
@@ -320,7 +353,13 @@ p{margin:0 0 1em}
 .location-help{font-size:12px;color:#777;line-height:1.55}
 .new-location-fields{border-left:2px solid #d2bbb2;background:#faf8f7;padding:13px 14px;margin:-2px 0 17px}
 .new-location-fields[hidden]{display:none!important}
-.storage-management-panel{margin-top:36px}
+/* Location administration is collapsed above the table, not below it. */
+.inventory-location-tools{margin:15px 0 20px;border:1px solid #dedede;background:#fff;max-width:100%}
+.inventory-location-tools summary{cursor:pointer;padding:11px 14px;font-size:13px;font-weight:650;color:#784335;user-select:none}
+.inventory-location-tools[open] summary{border-bottom:1px solid #e5e5e5;background:#fafafa}
+.inventory-location-tools>.muted{padding:0 14px;margin:12px 0}
+.inventory-location-tools>.storage-location-list{margin:0 14px 20px}
+.inventory-location-tools>.location-admin-grid{margin:0 14px 18px}
 .storage-management-panel>.muted{max-width:860px}
 .storage-location-list{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0 18px;margin:5px 0 24px;border-top:1px solid #e5e5e5}
 .storage-location-row{display:flex;align-items:center;justify-content:space-between;gap:11px;min-width:0;padding:12px 0;border-bottom:1px solid #e5e5e5}
