@@ -1124,50 +1124,84 @@ p{margin:0 0 1em}
   .simple-supply-actions{gap:13px}
   .simple-public-explainer{padding:10px 13px}
 }
-
-/* Put quantity on hand first, at the left edge of every public supply row. */
+/* Public list reading order: item name, on-hand count, then the remaining unique figures. */
 .simple-supply-top{
   display:grid;
-  grid-template-columns:minmax(160px,200px) minmax(0,1fr);
-  align-items:center;
-  justify-content:start;
-  column-gap:21px;
+  grid-template-columns:minmax(0,1fr) minmax(160px,210px);
+  align-items:baseline;
+  justify-content:stretch;
+  column-gap:24px;
   row-gap:8px;
+  margin-bottom:10px;
 }
-.simple-supply-count{
-  min-width:0;
+.simple-supply-name{
+  grid-column:1;
+  grid-row:1;
   justify-content:flex-start;
 }
+.simple-supply-name h4{
+  font-size:19px;
+}
+.simple-supply-count{
+  grid-column:2;
+  grid-row:1;
+  min-width:0;
+  justify-content:flex-start;
+  white-space:nowrap;
+}
 .simple-supply-count strong{
-  font-size:30px;
+  font-size:26px;
   font-weight:650;
 }
 .simple-supply-count span{
   font-size:13px;
 }
-.simple-supply-name{
-  justify-content:flex-start;
+.simple-supply-bottom{
+  gap:12px 20px;
+}
+.simple-supply-details{
+  gap:5px 23px;
+}
+.simple-supply-details>span{
+  white-space:nowrap;
+}
+.simple-supply-need strong{
+  color:inherit;
+}
+.simple-supply-bottom>.report-purchase-btn{
+  flex-shrink:0;
+  padding:8px 13px;
+  min-height:36px;
+  font-size:12px;
 }
 @media(max-width:850px){
   .simple-supply-top{
     display:grid;
-    grid-template-columns:minmax(160px,200px) minmax(0,1fr);
-    align-items:center;
+    grid-template-columns:minmax(0,1fr) minmax(150px,200px);
+    align-items:baseline;
     gap:9px 15px;
   }
 }
 @media(max-width:520px){
   .simple-supply-top{
     grid-template-columns:1fr;
-    gap:6px;
-  }
-  .simple-supply-count{
-    grid-row:1;
+    gap:5px;
   }
   .simple-supply-name{
+    grid-column:1;
+    grid-row:1;
+  }
+  .simple-supply-count{
+    grid-column:1;
     grid-row:2;
   }
   .simple-supply-count strong{
-    font-size:27px;
+    font-size:25px;
+  }
+  .simple-supply-name h4{
+    font-size:18px;
+  }
+  .simple-supply-details{
+    gap:5px 17px;
   }
 }
