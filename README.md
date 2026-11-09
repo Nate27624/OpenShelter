@@ -17,14 +17,14 @@ The application now has one interconnected workflow:
 - **Receive donations:** One-click common items or detailed receipt; supports new supply types and optional expiration batches.
 - **Distribute supplies:** Item, quantity and reason; avoids negative stock.
 - **Alerts & expiration:** Low-stock alerts, adjustable item-specific minimum thresholds, and batch-level expiration watch.
-- **Public Facing:** Read-only visitor preview showing all public-enabled supply types. Items below their minimum are marked as needed; other public items remain listed. Private items and internal stock figures stay hidden.
+- **Public Facing:** Searchable, category-filtered visitor availability preview showing public-enabled supplies with their quantities on hand and **Available / Limited / Not available** statuses. Private items and shelf locations stay hidden; sample quantities update after intake, distribution, or corrections. The prototype tells visitors to confirm availability with the shelter before traveling.
 - **Activity & Corrections:** Transaction history, physical stock reconciliation, and staff controls for public visibility. Toggling visibility immediately updates the Public Facing preview.
 
 ## Technical approach
 
 This is a GitHub Pages-hosted **demonstration**, written in vanilla HTML/CSS/JavaScript. The pages require no build tooling or backend. The mock inventory is stored only in browser `localStorage` and is **not shared between people, devices or browsers**. Reset using the **Reset example data** link above the current section. **Do not enter real or sensitive data.**
 
-Proposed production architecture: retain the existing WordPress site for the public donor experience; add an approved public needs widget; create a secure, authenticated inventory API and staff UI with role-based access, server-side audit log, and reliable reconciliation of batches and quantity movements. Do not publish private inventory through GitHub Pages.
+Proposed production architecture: retain the existing WordPress site for the public donor experience; add an approved public inventory availability display (and public needs list if desired); create a secure, authenticated inventory API and staff UI with role-based access, server-side audit log, and reliable reconciliation of batches and quantity movements. Do not publish private inventory through GitHub Pages.
 
 ## Files
 
@@ -40,7 +40,7 @@ The repository is published from `main` / `docs`. See [repository Pages settings
 
 ## Staff validation before implementation
 
-Confirm actual item taxonomy and storage labels, which items need batch expiration tracking, minimum quantities, how staff approve a public need, who may edit counts and thresholds, and whether one-click inventory actions are usable during a busy donation shift.
+Confirm actual item taxonomy and storage labels, which items need batch expiration tracking, minimum quantities, which supplies and quantities can be shown to visitors, how often public availability should refresh, who may edit visibility and counts, and whether one-click inventory actions are usable during a busy donation shift. Inventory on hand does not necessarily equal inventory available for distribution; production data may require reservations or eligibility rules.
 
 ## Visual integration with The Open Shelter website
 
