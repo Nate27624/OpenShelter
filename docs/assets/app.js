@@ -230,6 +230,8 @@ function recentRows(limit=6){
  return data.history.slice(0,limit).map(e=>`<div class="history-row"><span class="movement-type ${e.change<0?"outbound":"inbound"}">${e.kind==="Relocation"?"MOVE":e.kind==="Correction"?"ADJ":e.change<0?"OUT":"IN"}</span><span class="history-description"><strong>${esc(e.kind)} · ${esc(get(e.item)?.name||e.item)}</strong><small>${esc(e.time)} · ${esc(e.note||"No note")}</small></span><b class="${e.change<0?"negative":"positive"}">${e.change>0?"+":""}${e.change}</b></div>`).join("")||`<div class="empty-state">No recorded activity.</div>`;
 }
 function stockRows(){
+ const showReported=pendingReports().length>0;
+ const reportedCell=id=>{const qty=pendingFor(id);return `<td class="inventory-reported-count">${qty?`<strong>${qty.toLocaleString()}</strong>`:"—"}</td>`};
  const rows=data.items.filter(x=>(filter==="All"||x.cat===filter)&&(stockFilter==="All"||(stockFilter==="Low stock"?atRisk(x):stockFilter==="Public"?x.public:!x.public))&&`${x.name} ${x.cat} ${locationSummary(x)}`.toLowerCase().includes(search.toLowerCase()));
  const cats=[...new Set([...categories(),"Agency","Clothing","Food","Hygiene","Medical"])].sort((a,b)=>a.localeCompare(b));
  const categoryOptions=selected=>cats.map(cat=>`<option value="${esc(cat)}" ${cat===selected?"selected":""}>${esc(cat)}</option>`).join("");
@@ -239,6 +241,7 @@ function stockRows(){
    <td><input form="${esc(formId)}" type="text" name="name" value="${esc(x.name)}" maxlength="80" required aria-label="Supply name for ${esc(x.name)}" placeholder="Supply name"></td>
    <td><select form="${esc(formId)}" name="category" required aria-label="Category for ${esc(x.name)}">${categoryOptions(x.cat)}</select></td>
    <td><output class="inventory-total-count" id="inventory-total-${esc(formId)}" aria-label="Total count for ${esc(x.name)}">${x.qty.toLocaleString()}</output><small class="inventory-total-subtitle">Sum of locations</small></td>
+   ${showReported?reportedCell(x.id):""}
    <td><input form="${esc(formId)}" type="number" name="min" value="${x.min}" min="0" max="1000000" step="1" required data-inventory-minimum aria-label="Stock minimum for ${esc(x.name)}"></td>
    <td class="location-cell">
     <div class="inventory-location-counts">
@@ -255,6 +258,7 @@ function stockRows(){
   <td><input form="inventory-add-form" id="inventory-add-name" name="name" type="text" maxlength="80" required placeholder="New supply" aria-label="New supply name"></td>
   <td><select form="inventory-add-form" name="category" required aria-label="Category for new supply"><option value="" selected disabled>Choose category…</option>${categoryOptions("")}</select></td>
   <td><output class="inventory-total-count" id="inventory-total-inventory-add-form" aria-label="Total count for new supply">0</output><small class="inventory-total-subtitle">Sum of locations</small></td>
+  ${showReported?`<td class="inventory-reported-count">—</td>`:""}
   <td><input form="inventory-add-form" name="min" type="number" min="0" max="1000000" value="10" step="1" required data-inventory-minimum aria-label="Minimum count for new supply"></td>
   <td class="location-cell"><div class="inventory-location-add inventory-location-add-new"><select form="inventory-add-form" name="location" data-inventory-location-choice aria-label="Storage location for new supply"><option value="">Unassigned</option>${locationOptions()}<option value="__new">＋ New storage location…</option></select><input form="inventory-add-form" name="newLocationQty" type="number" min="0" max="1000000" value="0" step="1" required data-inventory-count aria-label="Count at selected location for new supply"><input form="inventory-add-form" type="text" name="newLocationName" maxlength="60" placeholder="New location name" aria-label="New storage location name" data-inventory-new-location hidden></div><small>Save, then edit to assign counts at additional locations.</small></td>
   <td id="inventory-status-inventory-add-form">${statusMarkup(0,10)}</td>
@@ -268,10 +272,10 @@ function stockRows(){
   <input type="range" id="inventory-scroll-range" min="0" max="100" value="0" step="1" aria-label="Horizontal inventory table position">
   <button type="button" class="mini-btn" data-action="inventory-scroll-right" aria-label="Scroll inventory table right">▶</button>
  </div>`:""}
- <div class="table-wrap inventory-table-scroll" id="inventory-table-scroll" tabindex="0" aria-label="Inventory table, scroll to view all columns"><table class="data-table inventory-table ${inventoryEditMode?"inventory-table-editing":""}"><thead><tr><th>Supply</th><th>Category</th><th>Total count</th><th>Minimum</th><th>Location counts</th><th>Status</th><th>Visible</th>${inventoryEditMode?"<th>Save</th>":""}</tr></thead><tbody>
- ${rows.map(x=>inventoryEditMode?editable(x):`<tr><td><strong>${esc(x.name)}</strong></td><td>${esc(x.cat)}</td><td><b>${x.qty}</b></td><td>${x.min}</td><td class="location-cell">${esc(locationSummary(x))}</td><td>${badge(x)}</td><td><span class="visibility-chip ${x.public?"published":""}">${x.public?"Public":"Private"}</span></td></tr>`).join("")}
+ <div class="table-wrap inventory-table-scroll" id="inventory-table-scroll" tabindex="0" aria-label="Inventory table, scroll to view all columns"><table class="data-table inventory-table ${inventoryEditMode?"inventory-table-editing":""}"><thead><tr><th>Supply</th><th>Category</th><th>Total count</th>${showReported?'<th title="Donor-reported purchases that staff have not yet confirmed as received">Reported On Way</th>':""}<th>Minimum</th><th>Location counts</th><th>Status</th><th>Visible</th>${inventoryEditMode?"<th>Save</th>":""}</tr></thead><tbody>
+ ${rows.map(x=>inventoryEditMode?editable(x):`<tr><td><strong>${esc(x.name)}</strong></td><td>${esc(x.cat)}</td><td><b>${x.qty}</b></td>${showReported?reportedCell(x.id):""}<td>${x.min}</td><td class="location-cell">${esc(locationSummary(x))}</td><td>${badge(x)}</td><td><span class="visibility-chip ${x.public?"published":""}">${x.public?"Public":"Private"}</span></td></tr>`).join("")}
  ${inventoryEditMode&&inventoryAddMode?newRow:""}
- ${!rows.length&&!(inventoryEditMode&&inventoryAddMode)?`<tr><td colspan="${inventoryEditMode?8:7}" class="empty-state">No matching supplies. Clear a filter and try again.</td></tr>`:""}
+ ${!rows.length&&!(inventoryEditMode&&inventoryAddMode)?`<tr><td colspan="${(inventoryEditMode?8:7)+(showReported?1:0)}" class="empty-state">No matching supplies. Clear a filter and try again.</td></tr>`:""}
  </tbody></table></div>
  </div>
  <p class="table-foot">${rows.length} of ${data.items.length} supply types shown. ${inventoryEditMode?"Edit location counts directly and save the row. Reduce one location and increase another to move stock without changing the total. Use “New storage location” to create a shelf in the same row. Changes are tracked in Activity log.":"Total count is the sum of every storage location. Edit the table to adjust counts at each location, item details, or public visibility."}</p>`;
