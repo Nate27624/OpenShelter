@@ -76,12 +76,13 @@ const expiring=()=>data.lots.filter(l=>l.qty>0).sort((a,b)=>a.expiry.localeCompa
 const categories=()=>[...new Set(data.items.map(x=>x.cat))];
 const locationOptions=()=>data.locations.map(loc=>`<option value="${esc(loc)}">${esc(loc)}</option>`).join("");
 const locationBalances=x=>(x.stockLocations||[]).filter(entry=>entry.qty>0).sort((a,b)=>a.location.localeCompare(b.location));
+const stockLocationOptions=x=>locationBalances(x).map(entry=>`<option value="${esc(entry.location)}">${esc(entry.location)} (${entry.qty.toLocaleString()} available)</option>`).join("");
 const locationSummary=x=>locationBalances(x).map(entry=>`${entry.location} (${entry.qty.toLocaleString()})`).join(", ")||"—";
 const locationUsage=loc=>data.items.reduce((total,x)=>total+(x.stockLocations||[]).filter(entry=>entry.location===loc).reduce((sum,entry)=>sum+entry.qty,0),0);
 const locationItemCount=loc=>data.items.filter(x=>(x.stockLocations||[]).some(entry=>entry.location===loc&&entry.qty>0)).length;
 const matchingLocation=name=>data.locations.find(loc=>loc.toLowerCase()===name.toLowerCase());
 const cleanLocation=name=>String(name||"").trim().replace(/\s+/g," ");
-const validLocation=name=>name.length>=1&&name.length<=60&&!/[\x00-\x1f\x7f]/.test(name)&&name!=="Unassigned";
+const validLocation=name=>name.length>=1&&name.length<=60&&!/[\x00-\x1f\x7f]/.test(name)&&name.toLowerCase()!=="unassigned";
 const save=()=>{try{localStorage.setItem(storageKey,JSON.stringify(data))}catch{}};
 const now=()=>new Date().toLocaleString([],{month:"short",day:"numeric",hour:"numeric",minute:"2-digit"});
 const opt=(selected)=>data.items.map(x=>`<option value="${esc(x.id)}" ${x.id===selected?"selected":""}>${esc(x.name)}</option>`).join("");
@@ -104,6 +105,7 @@ function pendingRows(){
 function changeStock(id,delta,kind,note,location=""){
  const x=get(id);
  if(!x||!Number.isSafeInteger(delta)||x.qty+delta<0||x.qty+delta>1000000){notify("This quantity is not available.");return false}
+ if(delta<0&&location&&!(x.stockLocations||[]).some(entry=>entry.location===location&&entry.qty>=-delta)){notify("Not enough stock at that location.");return false}
  if(delta>0){
   const where=location||"Unassigned";
   if(where!=="Unassigned"&&!data.locations.includes(where)){notify("Select an existing storage location.");return false}
@@ -114,7 +116,7 @@ function changeStock(id,delta,kind,note,location=""){
   let remaining=-delta;
   /* Without an explicit withdrawal shelf, allocate outgoing stock against unassigned
      quantities first, then known shelves. The total remains canonical. */
-  for(const entry of [...x.stockLocations].sort((a,b)=>(a.location==="Unassigned"?-1:b.location==="Unassigned"?1:a.location.localeCompare(b.location)))){
+  for(const entry of (location?x.stockLocations.filter(entry=>entry.location===location):[...x.stockLocations].sort((a,b)=>(a.location==="Unassigned"?-1:b.location==="Unassigned"?1:a.location.localeCompare(b.location))))){
    const consumed=Math.min(entry.qty,remaining);
    entry.qty-=consumed;
    remaining-=consumed;
