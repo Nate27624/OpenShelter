@@ -234,16 +234,29 @@ function publicNeedsRows(){
  const all=data.items.filter(x=>x.public);
  const items=all.filter(x=>(publicCategory==="All"||x.cat===publicCategory)&&(`${x.name} ${x.cat}`.toLowerCase().includes(publicSearch.trim().toLowerCase())));
  const groups=[
-   {name:"Available",description:"These items are currently recorded above their low-stock threshold.",list:items.filter(x=>x.qty>0&&!atRisk(x)),status:"Available",statusClass:"ok"},
-   {name:"Limited availability",description:"Some stock is recorded, but quantities are running low.",list:items.filter(x=>x.qty>0&&atRisk(x)),status:"Limited",statusClass:"low"},
-   {name:"Currently unavailable",description:"No units are currently recorded. Check back or contact the shelter.",list:items.filter(x=>x.qty===0),status:"Not available",statusClass:"out"}
+  {name:"Available",description:"These items are currently recorded above their minimum stock target.",list:items.filter(x=>x.qty>0&&!atRisk(x)),status:"Available",statusClass:"ok"},
+  {name:"Limited availability",description:"Some stock is recorded, but quantities are running low.",list:items.filter(x=>x.qty>0&&atRisk(x)),status:"Limited",statusClass:"low"},
+  {name:"Currently unavailable",description:"No units are currently recorded. Check back or contact the shelter.",list:items.filter(x=>x.qty===0),status:"Not available",statusClass:"out"}
  ];
  const row=(x,g)=>{
-  const onWay=pendingFor(x.id);
-  return `<div class="public-item-with-report"><div class="availability-row public-donation-row"><div class="availability-item"><strong>${esc(x.name)}</strong><small>${esc(x.cat)}</small></div>
-   <div class="availability-quantity"><strong>${x.qty.toLocaleString()} ${esc(x.unit)}</strong><span>recorded in inventory</span>${onWay?`<small class="pending-public-note">${onWay} ${esc(x.unit)} donor-reported on the way (unverified)</small>`:""}</div>
-   <span class="status ${g.statusClass}">${g.status}</span>
-   <button type="button" class="btn small report-purchase-btn" data-action="purchase-open" data-id="${esc(x.id)}" aria-expanded="${purchaseItemId===x.id?"true":"false"}">${purchaseItemId===x.id?"Close form":"I've purchased this"}</button></div>
+  const pending=pendingFor(x.id);
+  const stillNeeded=Math.max(0,x.min-x.qty-pending);
+  const metric=(label,number,extra,kind="")=>`<div class="public-stock-stat ${kind}"><span class="public-stat-label">${label}</span><strong>${Number(number).toLocaleString()}</strong><small>${esc(x.unit)}</small>${extra?`<span class="public-stat-detail">${extra}</span>`:""}</div>`;
+  return `<div class="public-item-with-report">
+   <div class="public-item-heading">
+    <div class="availability-item"><strong>${esc(x.name)}</strong><small>${esc(x.cat)}</small></div>
+    <span class="status ${g.statusClass}">${g.status}</span>
+   </div>
+   <div class="public-stock-grid" aria-label="Inventory quantities for ${esc(x.name)}">
+    ${metric("On hand",x.qty,"Physically recorded")}
+    ${metric("Pending arrival",pending,"Donor-reported, not confirmed")}
+    ${metric("Desired stock",x.min,"Minimum stock target")}
+    ${metric("Still needed",stillNeeded,"After reported pending",stillNeeded>0?"public-stock-needed":"")}
+   </div>
+   <div class="public-item-action">
+    <span class="public-stock-context">${pending?"Pending purchases are unverified and are not included in on-hand stock.":"Stock can change before a visit."}</span>
+    <button type="button" class="btn small report-purchase-btn" data-action="purchase-open" data-id="${esc(x.id)}" aria-expanded="${purchaseItemId===x.id?"true":"false"}">${purchaseItemId===x.id?"Close form":"I've purchased this"}</button>
+   </div>
    ${purchaseItemId===x.id?`<form class="purchase-report-form" id="purchase-report-form"><input type="hidden" name="item" value="${esc(x.id)}">
     <h4>Report your purchase of ${esc(x.name)}</h4>
     <p class="muted">Tell us what you've purchased so the shelter can plan for its arrival. This is a demonstration only; your report is not sent to the shelter.</p>
@@ -253,7 +266,8 @@ function publicNeedsRows(){
     </div>
     <button type="submit" class="btn primary">Record purchase in demo</button>
     <p class="tiny muted purchase-privacy-note">Please don't enter names, contact details, or payment information. The report stays only in this browser until staff confirmation is simulated here.</p>
-   </form>`:""}</div>`;
+   </form>`:""}
+  </div>`;
  };
  if(!all.length)return `<div class="empty-state">No supplies have been enabled for public viewing. Staff can change this under Activity & Corrections.</div>`;
  if(!items.length)return `<div class="empty-state">No public supplies match that search. Try another item or category.</div>`;
@@ -276,6 +290,7 @@ function publicNeeds(){
  ${purchaseFeedback?`<div class="purchase-feedback" role="status">${esc(purchaseFeedback)}</div>`:""}
  <div class="public-availability-filters"><div class="field"><label for="public-item-search">Find a specific item</label><input type="search" id="public-item-search" placeholder="Search supplies..." value="${esc(publicSearch)}" autocomplete="off"></div>
  <div class="field"><label for="public-cat-filter">Category</label><select id="public-cat-filter"><option value="All">All categories</option>${cats.map(c=>`<option value="${esc(c)}" ${publicCategory===c?"selected":""}>${esc(c)}</option>`).join("")}</select></div></div>
+ <p class="public-stock-explainer"><strong>How to read this list:</strong> <b>On hand</b> is what the shelter has recorded, <b>Pending arrival</b> is what donors say they've purchased, and <b>Desired stock</b> is the minimum target set by staff. <b>Still needed</b> is the difference after accounting for reported pending items; pending donations have not been verified.</p>
  <div id="public-preview" aria-live="polite">${publicNeedsRows()}</div>
  <div class="public-preview-footnote"><strong>Before you visit:</strong> Availability can change throughout the day, and listed quantities do not guarantee that an item can be provided. <a href="https://theopenshelter.org/staff-contact-us/" target="_blank" rel="noopener">Contact The Open Shelter</a> to confirm that the item you need is available.</div>
  <p class="tiny muted"><strong>Prototype only:</strong> This page uses fictional inventory stored in your browser. Purchase reports are also browser-local and are <strong>not delivered to The Open Shelter</strong>. Only supplies enabled as public appear here; private items and storage locations remain hidden. A real deployment requires an authenticated shared inventory service.</p>
