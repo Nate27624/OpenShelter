@@ -457,7 +457,21 @@ document.addEventListener("click",e=>{
  }
  if(act==="reset"){if(!confirm("Restore the fictional inventory to its original sample values?"))return;data=initial();normalizeStockLocations();save();search="";filter="All";stockFilter="All";publicSearch="";publicCategory="All";purchaseItemId=null;purchaseFeedback="";pendingReceiptId=null;inventoryEditMode=false;inventoryAddMode=false;render();notify("Example inventory restored.");return}
 });
+function previewInventoryLocationTotal(input){
+ const formId=input.getAttribute("form");
+ if(!formId)return;
+ const form=document.getElementById(formId),output=document.getElementById("inventory-total-"+formId);
+ if(!form||!output)return;
+ const counts=Array.from(form.elements).filter(field=>field.hasAttribute("data-inventory-count"));
+ const values=counts.map(field=>String(field.value));
+ if(values.some(value=>!/^[0-9]+$/.test(value)||!Number.isSafeInteger(Number(value)))){
+  output.textContent="—";return
+ }
+ const sum=values.reduce((total,value)=>total+Number(value),0);
+ output.textContent=sum<=1000000?sum.toLocaleString():"Over limit";
+}
 document.addEventListener("input",e=>{
+ if(e.target.matches?.("[data-inventory-count]"))previewInventoryLocationTotal(e.target);
  if(e.target.id==="stock-search"){search=e.target.value;const pane=document.getElementById("inventory-results");if(pane)pane.innerHTML=stockRows();}
  if(e.target.id==="public-item-search"){publicSearch=e.target.value;const pane=document.getElementById("public-preview");if(pane)pane.innerHTML=publicNeedsRows();}
 });
