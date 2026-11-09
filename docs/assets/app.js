@@ -233,13 +233,12 @@ function recentRows(limit=6){
 function stockRows(){
  const rows=data.items.filter(x=>(filter==="All"||x.cat===filter)&&(stockFilter==="All"||(stockFilter==="Low stock"?atRisk(x):stockFilter==="Public"?x.public:!x.public))&&`${x.name} ${x.cat} ${locationSummary(x)}`.toLowerCase().includes(search.toLowerCase()));
  const cats=[...new Set([...categories(),"Agency","Clothing","Food","Hygiene","Medical"])].sort((a,b)=>a.localeCompare(b));
- const categoryOptions=`<datalist id="inventory-category-options">${cats.map(cat=>`<option value="${esc(cat)}"></option>`).join("")}</datalist>`;
+ const categoryOptions=selected=>cats.map(cat=>`<option value="${esc(cat)}" ${cat===selected?"selected":""}>${esc(cat)}</option>`).join("");
  const editable=x=>{
   const formId="inventory-edit-"+x.id;
   return `<tr class="inventory-edit-row">
-   <td><input form="${esc(formId)}" type="text" name="name" value="${esc(x.name)}" maxlength="80" required aria-label="Supply name for ${esc(x.name)}" placeholder="Supply name">
-    <input form="${esc(formId)}" type="text" name="unit" value="${esc(x.unit)}" maxlength="30" required aria-label="Unit for ${esc(x.name)}" placeholder="Unit, e.g. pieces" class="inventory-unit-input"></td>
-   <td><input form="${esc(formId)}" type="text" name="category" value="${esc(x.cat)}" maxlength="40" required list="inventory-category-options" aria-label="Category for ${esc(x.name)}"></td>
+   <td><input form="${esc(formId)}" type="text" name="name" value="${esc(x.name)}" maxlength="80" required aria-label="Supply name for ${esc(x.name)}" placeholder="Supply name"></td>
+   <td><select form="${esc(formId)}" name="category" required aria-label="Category for ${esc(x.name)}">${categoryOptions(x.cat)}</select></td>
    <td><output class="inventory-total-count" id="inventory-total-${esc(formId)}" aria-label="Total count for ${esc(x.name)}">${x.qty.toLocaleString()}</output><small class="inventory-total-subtitle">Sum of locations</small></td>
    <td><input form="${esc(formId)}" type="number" name="min" value="${x.min}" min="0" max="1000000" step="1" required aria-label="Stock minimum for ${esc(x.name)}"></td>
    <td class="location-cell">
@@ -254,9 +253,8 @@ function stockRows(){
   </tr>`;
  };
  const newRow=`<tr class="inventory-new-row">
-  <td><input form="inventory-add-form" id="inventory-add-name" name="name" type="text" maxlength="80" required placeholder="New supply" aria-label="New supply name">
-   <input form="inventory-add-form" name="unit" type="text" maxlength="30" required placeholder="Unit (e.g. pieces)" aria-label="Unit for new supply" class="inventory-unit-input"></td>
-  <td><input form="inventory-add-form" name="category" type="text" maxlength="40" required list="inventory-category-options" placeholder="Category" aria-label="Category for new supply"></td>
+  <td><input form="inventory-add-form" id="inventory-add-name" name="name" type="text" maxlength="80" required placeholder="New supply" aria-label="New supply name"></td>
+  <td><select form="inventory-add-form" name="category" required aria-label="Category for new supply"><option value="" selected disabled>Choose category…</option>${categoryOptions("")}</select></td>
   <td><output class="inventory-total-count" id="inventory-total-inventory-add-form" aria-label="Total count for new supply">0</output><small class="inventory-total-subtitle">Sum of locations</small></td>
   <td><input form="inventory-add-form" name="min" type="number" min="0" max="1000000" value="10" step="1" required aria-label="Minimum count for new supply"></td>
   <td class="location-cell"><div class="inventory-location-add inventory-location-add-new"><select form="inventory-add-form" name="location" aria-label="Storage location for new supply"><option value="">Unassigned</option>${locationOptions()}</select><input form="inventory-add-form" name="newLocationQty" type="number" min="0" max="1000000" value="0" step="1" required data-inventory-count aria-label="Count at selected location for new supply"></div><small>Save, then edit to assign counts at additional locations.</small></td>
@@ -264,8 +262,8 @@ function stockRows(){
   <td><select form="inventory-add-form" name="visibility" aria-label="Public visibility for new supply"><option value="private" selected>Private</option><option value="public">Public</option></select></td>
   <td><form id="inventory-add-form"></form><button type="submit" form="inventory-add-form" class="btn primary small">Add item</button></td>
  </tr>`;
- return `${inventoryEditMode?categoryOptions:""}<div class="table-wrap"><table class="data-table inventory-table ${inventoryEditMode?"inventory-table-editing":""}"><thead><tr><th>Supply</th><th>Category</th><th>Total count</th><th>Minimum</th><th>Location counts</th><th>Status</th><th>Visible</th>${inventoryEditMode?"<th>Save</th>":""}</tr></thead><tbody>
- ${rows.map(x=>inventoryEditMode?editable(x):`<tr><td><strong>${esc(x.name)}</strong></td><td>${esc(x.cat)}</td><td><b>${x.qty}</b> <small>${esc(x.unit)}</small></td><td>${x.min}</td><td class="location-cell">${esc(locationSummary(x))}</td><td>${badge(x)}</td><td><span class="visibility-chip ${x.public?"published":""}">${x.public?"Public":"Private"}</span></td></tr>`).join("")}
+ return `<div class="table-wrap"><table class="data-table inventory-table ${inventoryEditMode?"inventory-table-editing":""}"><thead><tr><th>Supply</th><th>Category</th><th>Total count</th><th>Minimum</th><th>Location counts</th><th>Status</th><th>Visible</th>${inventoryEditMode?"<th>Save</th>":""}</tr></thead><tbody>
+ ${rows.map(x=>inventoryEditMode?editable(x):`<tr><td><strong>${esc(x.name)}</strong></td><td>${esc(x.cat)}</td><td><b>${x.qty}</b></td><td>${x.min}</td><td class="location-cell">${esc(locationSummary(x))}</td><td>${badge(x)}</td><td><span class="visibility-chip ${x.public?"published":""}">${x.public?"Public":"Private"}</span></td></tr>`).join("")}
  ${inventoryEditMode&&inventoryAddMode?newRow:""}
  ${!rows.length&&!(inventoryEditMode&&inventoryAddMode)?`<tr><td colspan="${inventoryEditMode?8:7}" class="empty-state">No matching supplies. Clear a filter and try again.</td></tr>`:""}
  </tbody></table></div>
@@ -493,11 +491,9 @@ document.addEventListener("submit",e=>{
   const id=String(form.dataset?.inventoryEdit||""),existing=id?get(id):null;
   if(id&&!existing){notify("That inventory item no longer exists.");return}
   if(!id&&!inventoryAddMode){notify("Use Add item to create a supply.");return}
-  const name=String(fd.get("name")||"").trim(),cat=String(fd.get("category")||"").trim(),unit=String(fd.get("unit")||"").trim();
+  const name=String(fd.get("name")||"").trim(),cat=String(fd.get("category")||"").trim();
   const rawMin=String(fd.get("min")??""),minimum=Number(rawMin),vis=String(fd.get("visibility")||"");
-  if(!name||name.length>80||!cat||cat.length>40||!unit||unit.length>30){
-   notify("Enter a supply name, category, and unit.");return
-  }
+  if(!name||name.length>80||!cat||![...new Set([...categories(),"Agency","Clothing","Food","Hygiene","Medical"])].includes(cat)){notify("Enter a name and choose a valid category.");return}
   if(!/^\d+$/.test(rawMin)||!Number.isSafeInteger(minimum)||minimum>1000000){
    notify("Enter a whole-number minimum from 0 to 1,000,000.");return
   }
@@ -539,7 +535,6 @@ document.addEventListener("submit",e=>{
    const changes=[];
    if(name!==existing.name)changes.push("Name: "+existing.name+" → "+name);
    if(cat!==existing.cat)changes.push("Category: "+existing.cat+" → "+cat);
-   if(unit!==existing.unit)changes.push("Unit: "+existing.unit+" → "+unit);
    if(minimum!==existing.min)changes.push("Minimum: "+existing.min+" → "+minimum);
    if(publicVisible!==existing.public)changes.push("Visibility: "+(publicVisible?"Public":"Private"));
    const oldCounts=new Map(existing.stockLocations.map(row=>[row.location,row.qty]));
@@ -553,12 +548,12 @@ document.addEventListener("submit",e=>{
    if(diff&&!changeStock(id,diff,"Correction","Physical count updated from Inventory locations","",true))return;
    existing.stockLocations=updated;
    existing.qty=total;
-   existing.name=name;existing.cat=cat;existing.unit=unit;existing.min=minimum;existing.public=publicVisible;
+   existing.name=name;existing.cat=cat;existing.min=minimum;existing.public=publicVisible;
    if(changes.length||locationChanges.length)movement("Item edit",id,0,[...changes,...locationChanges].join(" · ").slice(0,500));
    save();render();notify(name+" updated. Total: "+total.toLocaleString());return
   }
   const createdId="custom-"+Date.now().toString(36)+"-"+Math.random().toString(36).slice(2,9);
-  data.items.push({id:createdId,name,cat,unit,qty:total,min:minimum,public:publicVisible,stockLocations:updated});
+  data.items.push({id:createdId,name,cat,unit:"items",qty:total,min:minimum,public:publicVisible,stockLocations:updated});
   movement("Item created",createdId,total,"Added from Inventory table"+(updated.length?" · "+updated[0].location+": "+total:" · No stock"));
   inventoryAddMode=false;save();render();notify(name+" added to inventory.");return
  }
