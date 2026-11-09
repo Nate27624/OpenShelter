@@ -71,9 +71,17 @@ p{margin:0 0 1em}
   line-height:1.5;white-space:nowrap;padding:10px 0
 }
 .site-nav a:hover,.site-nav a:focus-visible{color:var(--accent)}
-/* Visible shortcut to the public inventory in the main website-style header. */
-.site-nav .site-nav-public{color:#954735;border-bottom:2px solid transparent;padding-bottom:8px}
-.site-nav .site-nav-public:hover,.site-nav .site-nav-public[aria-current="page"]{color:var(--accent);border-bottom-color:var(--accent)}
+/* Public and admin prototype views live at the top level of the header. */
+.site-nav .site-nav-public,.site-nav .site-nav-admin{
+  color:#954735;
+  border-bottom:2px solid transparent;
+  padding-bottom:8px;
+}
+.site-nav .site-nav-public:hover,.site-nav .site-nav-public[aria-current="page"],
+.site-nav .site-nav-admin:hover,.site-nav .site-nav-admin[aria-current="page"]{
+  color:var(--accent);
+  border-bottom-color:var(--accent);
+}
 
 /* Slim distinction between the real website and the public demonstration */
 .prototype-notice{background:#f6f6f6;border-bottom:1px solid #e6e6e6}
@@ -85,6 +93,8 @@ p{margin:0 0 1em}
 
 /* WordPress content page proportions */
 .wp-page{max-width:1160px;margin:0 auto;padding:46px 25px 94px}
+.wp-page.public-mode{padding-top:28px}
+.wp-page.public-mode .public-stock-page{border-top:0;padding-top:0}
 .wp-page-header{margin:0 0 31px}
 .wp-page-header h1{
   font-size:37px;font-weight:600;letter-spacing:0;line-height:1.25;
@@ -353,6 +363,7 @@ p{margin:0 0 1em}
 }
 @media(max-width:750px){
   .wp-page{padding:30px 17px 60px}
+  .wp-page.public-mode{padding-top:22px}
   .wp-page-header h1{font-size:30px}
   .wp-page-header p{font-size:16px}
   .section-header h2{font-size:23px}
