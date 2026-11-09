@@ -300,6 +300,8 @@ function distribute(){
  <div id="distribute-available" class="stock-summary">Available now: <strong>${get("hygiene").qty} kits</strong></div>
  <div class="form-grid"><div class="field"><label for="distribute-qty">Quantity</label><input id="distribute-qty" name="qty" type="number" value="1" min="1" step="1" required></div>
  <div class="field"><label for="distribute-purpose">Distribution type</label><select name="purpose" id="distribute-purpose"><option>Walk-in assistance</option><option>Outreach</option><option>Meal program</option><option>Other</option></select></div></div>
+ <div class="field"><label for="distribute-location">Storage location <span class="optional">(optional)</span></label><select name="location" id="distribute-location"><option value="">Automatic allocation (location not recorded)</option>${stockLocationOptions(get("hygiene"))}</select>
+ <small class="location-help">Select the shelf you took supplies from to keep the location balances accurate.</small></div>
  <div class="field"><label for="distribute-note">Note <span class="optional">(optional)</span></label><textarea id="distribute-note" name="note" placeholder="No personal details needed"></textarea></div>
  <button class="btn primary" type="submit">Confirm distribution →</button></form></section>
  <section class="panel">${title("Frequently distributed")}<p class="muted">The same items can be received, distributed, and monitored throughout the site.</p>
@@ -428,7 +430,7 @@ document.addEventListener("change",e=>{
  if(e.target.id==="public-cat-filter"){publicCategory=e.target.value;const pane=document.getElementById("public-preview");if(pane)pane.innerHTML=publicNeedsRows()}
  if(e.target.id==="receive-item"){const el=document.getElementById("new-item-fields");if(el)el.hidden=e.target.value!=="__new"}
  if(e.target.id==="receive-location"){const el=document.getElementById("receive-add-location");if(el)el.hidden=e.target.value!=="__add"}
- if(e.target.id==="distribute-item"){const x=get(e.target.value);const el=document.getElementById("distribute-available");if(x&&el)el.innerHTML="Available now: <strong>"+x.qty+" "+esc(x.unit)+"</strong>"}
+ if(e.target.id==="distribute-item"){const x=get(e.target.value),el=document.getElementById("distribute-available"),locations=document.getElementById("distribute-location");if(x&&el)el.innerHTML="Available now: <strong>"+x.qty+" "+esc(x.unit)+"</strong>";if(x&&locations)locations.innerHTML='<option value="">Automatic allocation (location not recorded)</option>'+stockLocationOptions(x)}
  if(e.target.id==="correct-item"){const x=get(e.target.value),el=document.getElementById("correct-existing");if(x&&el){el.innerHTML="Recorded count: <strong>"+x.qty+" "+esc(x.unit)+"</strong>";document.getElementById("correct-qty").value=x.qty;document.getElementById("correct-public").checked=x.public;document.getElementById("correct-public-label").textContent=x.public?"Visible":"Private";}}
  if(e.target.id==="correct-public"){const label=document.getElementById("correct-public-label");if(label)label.textContent=e.target.checked?"Visible":"Private"}
 });
@@ -503,6 +505,7 @@ document.addEventListener("submit",e=>{
    id="custom-"+Date.now().toString(36)+"-"+Math.random().toString(36).slice(2,6);
    newItem={id,name,cat:String(fd.get("newCat")||"Agency"),qty:0,min,unit,stockLocations:[],public:false};
   }else if(!get(id)){notify("Choose a valid supply.");return}
+  if((newItem?0:get(id).qty)+qty>1000000){notify("This donation would exceed the maximum tracked quantity.");return}
   if(location&&!matchingLocation(location))data.locations.push(location);
   data.locations.sort((a,b)=>a.localeCompare(b));
   if(newItem)data.items.push(newItem);
@@ -513,8 +516,9 @@ document.addEventListener("submit",e=>{
  }
  if(form.id==="distribute-form"){
   const id=String(fd.get("item")),qty=Number(fd.get("qty"));if(!Number.isSafeInteger(qty)||qty<1||qty>1000000){notify("Enter a valid positive quantity.");return}
-  const note=String(fd.get("purpose"))+(fd.get("note")?" · "+String(fd.get("note")).slice(0,150):"");
-  changeStock(id,-qty,"Distribution",note);return;
+  const location=String(fd.get("location")||"");
+  const note=String(fd.get("purpose"))+(fd.get("note")?" · "+String(fd.get("note")).slice(0,150):"")+(location?" · From "+location:" · Automatic shelf allocation");
+  changeStock(id,-qty,"Distribution",note,location);return;
  }
  if(form.id==="correct-form"){
   const id=String(fd.get("item")),qty=Number(fd.get("qty")),x=get(id);
