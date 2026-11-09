@@ -977,8 +977,9 @@ p{margin:0 0 1em}
   margin:0 0 26px;
 }
 .public-stock-list{
-  --stock-columns:minmax(230px,1fr) minmax(115px,.48fr) max-content;
-  --stock-gap:18px;
+  /* Fixed numeric/action tracks keep headers aligned with the values in every row. */
+  --stock-columns:minmax(220px,1fr) 130px 154px;
+  --stock-gap:16px;
   width:100%;
   margin:0 auto;
   border-top:1px solid #dedbd8;
@@ -1051,6 +1052,8 @@ p{margin:0 0 1em}
 }
 .public-stock-goal{padding-top:34px;min-width:0}
 .public-stock-target strong{font-size:24px;color:#484848;font-weight:600}
+.public-stock-target.public-stock-needed.needs-more strong{color:#a13f2d}
+.public-stock-target.public-stock-needed.target-met strong{color:#43724c}
 .public-stock-mobile-label{display:none}
 .public-stock-subline{
   display:block;
