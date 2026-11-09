@@ -251,21 +251,23 @@ function settings(){
  return `<div class="history-settings">
  <section class="panel">${title("Activity log")}<p class="muted">Every simulated inventory movement is recorded below. In production this audit log must be server-side and tamper-resistant.</p>${historyRows()}</section>
  <div class="settings-stack">
- <section class="panel">${title("Correct a physical count")}<p class="muted">Reconcile the system when a shelf count differs from the recorded quantity. Corrections create an audit entry.</p>
- <form id="correct-form"><div class="field"><label for="correct-item">Supply</label><select name="item" id="correct-item">${opt("coats")}</select></div>
+ <section class="panel">${title("Correct a physical count")}
+ <p class="muted">Choose a supply to update its recorded count or public visibility. Both settings are saved together.</p>
+ <form id="correct-form">
+ <div class="field"><label for="correct-item">Supply</label><select name="item" id="correct-item">${opt("coats")}</select></div>
  <div id="correct-existing" class="stock-summary">Recorded count: <strong>${get("coats").qty} coats</strong></div>
- <div class="field"><label for="correct-qty">Count on shelf</label><input id="correct-qty" name="qty" type="number" min="0" step="1" value="${get("coats").qty}" required></div>
- <div class="field"><label for="correct-reason">Reason for adjustment</label><select name="reason" id="correct-reason"><option>Physical count</option><option>Damaged or discarded</option><option>Missed movement</option><option>Other</option></select></div>
- <button class="btn primary" type="submit">Save count correction →</button></form>
+ <div class="field"><label for="correct-qty">Count on shelf</label><input id="correct-qty" name="qty" type="number" min="0" max="1000000" step="1" value="${get("coats").qty}" required></div>
+ <div class="field"><label for="correct-reason">Reason for count correction</label><select name="reason" id="correct-reason"><option>Physical count</option><option>Damaged or discarded</option><option>Missed movement</option><option>Other</option></select></div>
+ <div class="correction-visibility">
+ <div class="correction-visibility-heading"><strong>Public visibility</strong><label class="toggle-wrap"><span id="correct-public-label">${get("coats").public?"Visible":"Private"}</span><input type="checkbox" id="correct-public" class="toggle-input" name="publicVisible" value="on" ${get("coats").public?"checked":""} aria-label="Show selected supply on Public Facing page"><span class="toggle-track"></span></label></div>
+ <p>When enabled, this item's availability and recorded quantity appear on the Public Facing page. Private supplies are hidden.</p>
+ </div>
+ <button class="btn primary" type="submit">Save item changes</button>
+ </form>
  </section>
- </div></div>
- <section class="panel public-settings-panel">
- ${title("Public visibility",`<button class="text-link" data-go="public">Preview public-facing tab →</button>`)}
- <p class="muted">Choose which supplies visitors may see. Changes are reflected immediately in the Public Facing preview. Private items stay hidden from that view.</p>
- <div class="visibility-list public-visibility-list">${data.items.map(x=>`<div class="visibility-row"><span><strong>${esc(x.name)}</strong><small>${esc(x.cat)} · ${x.qty} ${esc(x.unit)} on hand</small></span><label class="toggle-wrap"><span>${x.public?"Public":"Private"}</span><input type="checkbox" class="toggle-input" data-public="${esc(x.id)}" ${x.public?"checked":""} aria-label="Make ${esc(x.name)} public-facing"><span class="toggle-track"></span></label></div>`).join("")}</div>
- <div class="note">These toggles only affect the browser-based demonstration. A real site would require staff authorization and approval before public publication.</div>
- </section>`;
+ </div></div>`;
 }
+
 function view(){return ({overview,inventory,receive,distribute,alerts,public:publicNeeds,history:settings}[section]||overview)()}
 function render(){root.innerHTML=shell();}
 function go(id){if(!sections.some(x=>x[0]===id))return;section=id;location.hash=id;render();window.scrollTo?.({top:0,behavior:"auto"})}
@@ -277,7 +279,7 @@ document.addEventListener("click",e=>{
  if(act==="quick"){changeStock(id,1,"Donation","Quick intake");return}
  if(act==="one-out"){changeStock(id,-1,"Distribution","One-click distribution");return}
  if(act==="prefill"){go("receive");const select=document.getElementById("receive-item");if(select)select.value=id;return}
- if(act==="edit"){go("history");const el=document.getElementById("correct-item");if(el){el.value=id;const x=get(id);document.getElementById("correct-existing").innerHTML="Recorded count: <strong>"+x.qty+" "+esc(x.unit)+"</strong>";document.getElementById("correct-qty").value=x.qty;el.scrollIntoView?.({block:"center",behavior:"smooth"});}return}
+ if(act==="edit"){go("history");const el=document.getElementById("correct-item");if(el){el.value=id;const x=get(id);document.getElementById("correct-existing").innerHTML="Recorded count: <strong>"+x.qty+" "+esc(x.unit)+"</strong>";document.getElementById("correct-qty").value=x.qty;document.getElementById("correct-public").checked=x.public;document.getElementById("correct-public-label").textContent=x.public?"Visible":"Private";el.scrollIntoView?.({block:"center",behavior:"smooth"});}return}
  if(act==="reset"){if(!confirm("Restore the fictional inventory to its original sample values?"))return;data=initial();save();search="";filter="All";stockFilter="All";render();notify("Example inventory restored.");return}
 });
 document.addEventListener("input",e=>{
@@ -290,8 +292,8 @@ document.addEventListener("change",e=>{
  if(e.target.id==="public-cat-filter"){publicCategory=e.target.value;const pane=document.getElementById("public-preview");if(pane)pane.innerHTML=publicNeedsRows()}
  if(e.target.id==="receive-item"){const el=document.getElementById("new-item-fields");if(el)el.hidden=e.target.value!=="__new"}
  if(e.target.id==="distribute-item"){const x=get(e.target.value);const el=document.getElementById("distribute-available");if(x&&el)el.innerHTML="Available now: <strong>"+x.qty+" "+esc(x.unit)+"</strong>"}
- if(e.target.id==="correct-item"){const x=get(e.target.value),el=document.getElementById("correct-existing");if(x&&el){el.innerHTML="Recorded count: <strong>"+x.qty+" "+esc(x.unit)+"</strong>";document.getElementById("correct-qty").value=x.qty;}}
- if(e.target.dataset.public){const x=get(e.target.dataset.public);if(!x)return;x.public=e.target.checked;save();render();notify(x.name+": "+(x.public?"public-facing":"private"))}
+ if(e.target.id==="correct-item"){const x=get(e.target.value),el=document.getElementById("correct-existing");if(x&&el){el.innerHTML="Recorded count: <strong>"+x.qty+" "+esc(x.unit)+"</strong>";document.getElementById("correct-qty").value=x.qty;document.getElementById("correct-public").checked=x.public;document.getElementById("correct-public-label").textContent=x.public?"Visible":"Private";}}
+ if(e.target.id==="correct-public"){const label=document.getElementById("correct-public-label");if(label)label.textContent=e.target.checked?"Visible":"Private"}
 });
 document.addEventListener("submit",e=>{
  const form=e.target;if(!["receive-form","distribute-form","correct-form"].includes(form.id)&&!form.matches("[data-threshold]"))return;
@@ -323,9 +325,19 @@ document.addEventListener("submit",e=>{
  if(form.id==="correct-form"){
   const id=String(fd.get("item")),qty=Number(fd.get("qty")),x=get(id);
   if(!x||!Number.isSafeInteger(qty)||qty<0||qty>1000000){notify("Enter a valid physical count.");return}
-  const diff=qty-x.qty;
-  if(diff===0){notify("No adjustment needed; count already matches.");return}
-  changeStock(id,diff,"Correction",String(fd.get("reason")||"Physical count"));return;
+  const visibility=fd.get("publicVisible")==="on";
+  const quantityChanged=qty!==x.qty;
+  const visibilityChanged=visibility!==x.public;
+  if(!quantityChanged&&!visibilityChanged){notify("No changes to save.");return}
+  x.public=visibility;
+  if(quantityChanged){
+    const diff=qty-x.qty;
+    changeStock(id,diff,"Correction",String(fd.get("reason")||"Physical count"));
+  }else{
+    save();render();
+  }
+  notify(x.name+": "+(quantityChanged?"count updated"+(visibilityChanged?" and ":""):"")+(visibilityChanged?(visibility?"public":"private"):""));
+  return;
  }
  if(form.matches("[data-threshold]")){
   const id=form.dataset.threshold,min=Number(fd.get("minimum")),x=get(id);
