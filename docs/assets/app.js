@@ -241,18 +241,15 @@ function publicNeedsRows(){
   const formOpen=purchaseItemId===x.id;
   return `<div class="simple-supply-item">
    <div class="simple-supply-top">
-    <div class="simple-supply-count"><strong>${x.qty.toLocaleString()}</strong><span>${esc(x.unit)} at the shelter now</span></div>
-    <div class="simple-supply-name"><h4>${esc(x.name)}</h4><span class="simple-supply-status ${x.qty===0?"out":"in"}">${x.qty===0?"Out of stock":"In stock"}</span></div>
+    <div class="simple-supply-name"><h4>${esc(x.name)}</h4></div>
+    <div class="simple-supply-count"><strong>${x.qty.toLocaleString()}</strong><span>${esc(x.unit)} on hand</span></div>
    </div>
    <div class="simple-supply-bottom">
-    <p class="simple-supply-details"><span>On the way: <strong>${pending.toLocaleString()}</strong></span><span>Stock goal: <strong>${x.min.toLocaleString()}</strong></span></p>
-    <div class="simple-supply-actions">
-     <span class="simple-supply-need ${needed?"needs-more":"target-met"}">${needed?`${needed.toLocaleString()} more needed`:"Goal covered"}</span>
-     <button type="button" class="btn small report-purchase-btn" data-action="purchase-open" data-id="${esc(x.id)}" aria-expanded="${formOpen?"true":"false"}">${formOpen?"Close form":"I've purchased this"}</button>
-    </div>
+    <p class="simple-supply-details"><span>On the way: <strong>${pending.toLocaleString()}</strong></span><span>Stock goal: <strong>${x.min.toLocaleString()}</strong></span><span class="simple-supply-need ${needed?"needs-more":"target-met"}">Still needed: <strong>${needed.toLocaleString()}</strong></span></p>
+    <button type="button" class="btn small report-purchase-btn" data-action="purchase-open" data-id="${esc(x.id)}" aria-expanded="${formOpen?"true":"false"}">${formOpen?"Close form":"I've purchased this"}</button>
    </div>
    ${formOpen?`<form class="purchase-report-form" id="purchase-report-form"><input type="hidden" name="item" value="${esc(x.id)}">
-    <h4>Report your purchase of ${esc(x.name)}</h4>
+    <h4>Report a purchase</h4>
     <p class="muted">Enter the amount you've purchased for the shelter. This demo report stays in this browser and is not sent to the shelter.</p>
     <div class="form-grid">
       <div class="field"><label for="report-quantity">Quantity purchased (${esc(x.unit)})</label><input name="qty" id="report-quantity" type="number" min="1" max="10000" step="1" value="1" required></div>
@@ -277,12 +274,12 @@ function publicNeeds(){
  return `<section class="panel public-facing-preview simple-public-page">
  <div class="simple-public-intro">
   <h2 class="section-sub">What supplies do we have?</h2>
-  <p>Find an item to see what's currently at the shelter and what donations are still needed.</p>
+  <p>Browse supplies available at The Open Shelter.</p>
  </div>
  ${purchaseFeedback?`<div class="purchase-feedback" role="status">${esc(purchaseFeedback)}</div>`:""}
  <div class="public-availability-filters"><div class="field"><label for="public-item-search">Find an item</label><input type="search" id="public-item-search" placeholder="Search for coats, food, supplies…" value="${esc(publicSearch)}" autocomplete="off"></div>
  <div class="field"><label for="public-cat-filter">Category</label><select id="public-cat-filter"><option value="All">All categories</option>${cats.map(c=>`<option value="${esc(c)}" ${publicCategory===c?"selected":""}>${esc(c)}</option>`).join("")}</select></div></div>
- <p class="simple-public-explainer"><strong>On the way</strong> means a donor reported purchasing the item, but it hasn't arrived yet. <strong>Stock goal</strong> is the amount the shelter aims to have. <strong>More needed</strong> accounts for both items on hand and those reported on the way.</p>
+ <p class="simple-public-explainer"><strong>On the way</strong> means purchased but not yet received. <strong>Still needed</strong> compares the stock goal with what is on hand and reported on the way.</p>
  <div id="public-preview" aria-live="polite">${publicNeedsRows()}</div>
  <div class="public-preview-footnote"><strong>Planning a visit?</strong> Listed stock may change or be reserved for other uses. <a href="https://theopenshelter.org/staff-contact-us/" target="_blank" rel="noopener">Check with The Open Shelter</a> before coming for a specific item.</div>
  <p class="tiny muted"><strong>Prototype only:</strong> Quantities are fictional and stored only in this browser. Purchase reports are not sent to the shelter or shared across devices. Private items and storage locations are not displayed.</p>
