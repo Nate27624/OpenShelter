@@ -16,9 +16,9 @@ The application now has one interconnected workflow:
 - **Inventory:** Searchable categories, quantities, storage locations, public/private indicators and adjustments.
 - **Receive donations:** One-click common items or detailed receipt; supports new supply types and optional expiration batches.
 - **Distribute supplies:** Item, quantity and reason; avoids negative stock.
-- **Alerts & expiration:** Item-specific thresholds and batch-level expiration watch.
+- **Alerts & expiration:** Low-stock alerts, adjustable item-specific minimum thresholds, and batch-level expiration watch.
 - **Public needs:** Donor-facing needs preview with staff-only eligibility toggles.
-- **Activity & settings:** Transaction history, physical stock reconciliation, and minimum quantity controls.
+- **Activity & corrections:** Transaction history and physical stock reconciliation.
 
 ## Technical approach
 
