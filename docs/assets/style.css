@@ -949,3 +949,178 @@ p{margin:0 0 1em}
   .public-stat-label{font-size:12px}
   .public-item-action{align-items:flex-start;flex-direction:column;gap:10px}
 }
+
+
+/* Simple public supply list — plain words, two lines per item.
+   Sections use the original site's text-first, understated styling. */
+.simple-public-page{
+  max-width:960px;
+  padding-top:20px;
+}
+.simple-public-intro{
+  border:0;
+  padding:0;
+  margin:0 0 27px;
+}
+.simple-public-intro .section-sub{
+  font-size:26px;
+  margin:0 0 9px;
+}
+.simple-public-intro p{
+  color:#626262;
+  font-size:16px;
+  margin:0;
+  line-height:1.65;
+}
+.simple-public-page .public-availability-filters{
+  margin-bottom:18px;
+}
+.simple-public-explainer{
+  margin:0 0 38px;
+  border-left:3px solid #b2b2b2;
+  background:#f8f8f8;
+  padding:11px 16px;
+  font-size:13px;
+  line-height:1.75;
+  color:#565656;
+}
+.simple-public-explainer strong{
+  color:#393939;
+  font-weight:600;
+}
+.simple-supply-group{
+  margin:0 0 42px;
+}
+.simple-supply-group>h3{
+  text-transform:uppercase;
+  font-size:20px;
+  font-weight:600;
+  line-height:1.4;
+  margin:0;
+  padding:0 0 12px;
+  border-bottom:2px solid #dcdcdc;
+  color:#333;
+}
+.simple-supply-list{
+  margin:0;
+}
+.simple-supply-item{
+  padding:21px 0 23px;
+  border-bottom:1px solid #e6e6e6;
+}
+.simple-supply-top,
+.simple-supply-bottom{
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  justify-content:space-between;
+  gap:9px 20px;
+}
+.simple-supply-top{
+  margin-bottom:10px;
+}
+.simple-supply-name{
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  gap:12px;
+}
+.simple-supply-name h4{
+  font-size:18px;
+  font-weight:600;
+  color:#292929;
+  line-height:1.4;
+  margin:0;
+}
+.simple-supply-status{
+  display:inline-block;
+  font-size:12px;
+  font-weight:600;
+  color:#436a49;
+  line-height:1.5;
+}
+.simple-supply-status.out{
+  color:#a6412a;
+}
+.simple-supply-count{
+  display:flex;
+  align-items:baseline;
+  gap:7px;
+  color:#343434;
+  font-size:14px;
+  line-height:1.4;
+}
+.simple-supply-count strong{
+  font-size:25px;
+  font-weight:650;
+  color:#292929;
+}
+.simple-supply-count span{
+  font-size:14px;
+  color:#5c5c5c;
+}
+.simple-supply-details{
+  display:flex;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:7px 25px;
+  color:#606060;
+  font-size:14px;
+  line-height:1.6;
+  margin:0;
+}
+.simple-supply-details strong{
+  font-weight:650;
+  color:#333;
+}
+.simple-supply-actions{
+  display:flex;
+  align-items:center;
+  gap:16px;
+  flex-wrap:wrap;
+}
+.simple-supply-need{
+  font-size:14px;
+  font-weight:650;
+  line-height:1.4;
+  white-space:nowrap;
+}
+.simple-supply-need.needs-more{
+  color:#ad422c;
+}
+.simple-supply-need.target-met{
+  color:#427348;
+}
+.simple-supply-actions .report-purchase-btn{
+  font-size:12px;
+  padding:8px 13px;
+  min-height:36px;
+}
+.simple-supply-item .purchase-report-form{
+  margin:19px 0 0;
+}
+.simple-public-page .public-preview-footnote{
+  margin-top:25px;
+}
+@media(max-width:850px){
+  .simple-supply-top,
+  .simple-supply-bottom{
+    align-items:flex-start;
+    flex-direction:column;
+    gap:10px;
+  }
+  .simple-supply-top{margin-bottom:8px}
+  .simple-supply-count{gap:8px}
+  .simple-supply-actions{justify-content:flex-start}
+}
+@media(max-width:520px){
+  .simple-public-intro .section-sub{font-size:23px}
+  .simple-supply-group{margin-bottom:28px}
+  .simple-supply-item{padding:17px 0 19px}
+  .simple-supply-name{gap:9px}
+  .simple-supply-name h4{font-size:17px}
+  .simple-supply-count strong{font-size:23px}
+  .simple-supply-details{gap:5px 15px}
+  .simple-supply-actions{gap:13px}
+  .simple-public-explainer{padding:10px 13px}
+}
