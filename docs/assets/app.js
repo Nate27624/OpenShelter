@@ -275,11 +275,9 @@ function inventory(){
  <div class="inventory-filters"><div class="field search-field"><label for="stock-search">Search items</label><input id="stock-search" type="search" placeholder="Name, category or shelf…" value="${esc(search)}"></div>
  <div class="field"><label for="cat-filter">Category</label><select id="cat-filter"><option>All</option>${categories().map(c=>`<option ${filter===c?"selected":""}>${esc(c)}</option>`).join("")}</select></div>
  <div class="field"><label for="status-filter">Status</label><select id="status-filter">${["All","Low stock","Public","Private"].map(c=>`<option ${stockFilter===c?"selected":""}>${c}</option>`).join("")}</select></div></div>
- <div id="inventory-results">${stockRows()}</div>
- </section>
- <section class="panel storage-management-panel">
- ${title("Storage locations")}
- <p class="muted">These locations are shared with Receive donations. Each supply remains one canonical inventory item; its available total is distributed across the locations listed above.</p>
+ <details class="inventory-location-tools" id="inventory-location-tools">
+ <summary>Manage storage locations</summary>
+ <p class="muted">Add and rename shelves, remove unused locations, or move inventory between locations.</p>
  <div class="storage-location-list">
   ${data.locations.map(loc=>`<div class="storage-location-row"><span><strong>${esc(loc)}</strong><small>${locationItemCount(loc)} supply ${locationItemCount(loc)===1?"type":"types"} stored</small></span><button type="button" class="mini-btn" data-action="location-remove" data-id="${esc(loc)}" ${locationUsage(loc)?"disabled":""} title="${locationUsage(loc)?"Only empty locations can be removed":"Remove unused location"}">Remove</button></div>`).join("")||'<p class="muted">No storage locations yet.</p>'}
  </div>
@@ -305,7 +303,10 @@ function inventory(){
    <button type="submit" class="btn small">Move stock</button>
   </form>
  </div>
- </section>`;
+ </details>
+ <div id="inventory-results">${stockRows()}</div>
+ </section>
+`;
 }
 function receive(){
  const pending=pendingReports().length;
