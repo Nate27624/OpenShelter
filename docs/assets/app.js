@@ -157,7 +157,7 @@ function shell(){
 const meta={
 overview:["Overview","Track donations, distributions, shortages, and expiration dates in one place."],
 inventory:["Inventory","View current stock quantities, storage locations, and which items need replenishing."],
-receive:["Receive donations","Record items as they arrive. Use quick entry for everyday supplies or add more details when needed."],
+receive:["Receive donations","Record items as they arrive using the detailed intake form."],
 distribute:["Distribute supplies","Record the supplies given out through day services and outreach."],
 alerts:["Low stock and expiration dates","Check the supplies that are running low and review items approaching their expiration dates."],
 public:["Public facing","Check available supplies and report a purchased donation."],
@@ -215,10 +215,7 @@ function overview(){
  </div>
  <div class="dashboard-grid follow-grid">
  <section class="panel">${title("Expiration watch",`<button class="text-link" data-go="alerts">Review batches →</button>`)}${expiryRows(3)}</section>
- <section class="panel quick-panel">${title("Frequently used actions")}
- <p class="muted">Log a common donation immediately, or open a detailed intake form when needed.</p>
- <div class="quick-grid">${["socks","soup","hygiene","water"].map(id=>{const x=get(id);return `<button class="quick-tile" data-action="quick" data-id="${id}"><span class="quick-plus">＋</span><strong>${esc(x.name)}</strong><small>+1 ${esc(x.unit)}</small></button>`}).join("")}</div>
- </section></div>`;
+ </div>`;
 }
 function stockRows(){
  const rows=data.items.filter(x=>(filter==="All"||x.cat===filter)&&(stockFilter==="All"||(stockFilter==="Low stock"?atRisk(x):stockFilter==="Public"?x.public:!x.public))&&`${x.name} ${x.cat} ${locationSummary(x)}`.toLowerCase().includes(search.toLowerCase()));
@@ -270,12 +267,7 @@ function receive(){
  <p class="muted">Donors can report purchases on the Public Facing page. Confirm items only after they arrive; reports do not increase inventory on their own.</p>
  <div id="pending-results">${pendingRows()}</div>
  <p class="tiny muted">Browser-only demonstration: reports from other visitors or devices do not reach this queue.</p>
- </section><div class="receive-layout">
- <section class="panel">
- ${title("Fast intake")}<p class="muted">One click adds a standard unit to stock (location unassigned). Use detailed intake when the shelf is known.</p>
- <div class="fast-items">${["socks","coats","soup","water","hygiene","deodorant"].map(id=>{const x=get(id);return `<div class="fast-row"><span><strong>${esc(x.name)}</strong><small>${x.qty} ${esc(x.unit)} on hand</small></span><button class="btn primary small" data-action="quick" data-id="${id}">＋ 1 ${esc(x.unit)}</button></div>`}).join("")}</div>
- <p class="tiny muted">Need a larger amount? Use the detailed form. All submissions update the same inventory.</p>
- </section>
+ </section><div class="receive-layout receive-form-only">
  <section class="panel">
  ${title("Detailed donation intake")}<p class="muted">Use for larger drop-offs, unusual supplies, or items with expiration dates.</p>
  <form id="receive-form"><div class="field"><label for="receive-item">Supply</label><select name="item" id="receive-item">${opt("soup")}<option value="__new">＋ New supply type…</option></select></div>
@@ -294,7 +286,7 @@ function receive(){
  <section class="muted-feature"><span class="feature-marker">↗</span><div><strong>Future option: QR-assisted donor drop-off</strong><p>Donors could pre-report what they brought. Staff would still verify quantities before updating stock, preventing inaccurate public requests.</p></div></section>`;
 }
 function distribute(){
- return `<div class="split">
+ return `<div class="split distribute-form-only">
  <section class="panel">${title("Log distributed supplies")}<p class="muted">Record items leaving for walk-in guests, outreach, or meals. No recipient personal information is required.</p>
  <form id="distribute-form"><div class="field"><label for="distribute-item">Item</label><select name="item" id="distribute-item">${opt("hygiene")}</select></div>
  <div id="distribute-available" class="stock-summary">Available now: <strong>${get("hygiene").qty} kits</strong></div>
@@ -303,10 +295,8 @@ function distribute(){
  <div class="field"><label for="distribute-location">Storage location <span class="optional">(optional)</span></label><select name="location" id="distribute-location"><option value="">Automatic allocation (location not recorded)</option>${stockLocationOptions(get("hygiene"))}</select>
  <small class="location-help">Select the shelf you took supplies from to keep the location balances accurate.</small></div>
  <div class="field"><label for="distribute-note">Note <span class="optional">(optional)</span></label><textarea id="distribute-note" name="note" placeholder="No personal details needed"></textarea></div>
- <button class="btn primary" type="submit">Confirm distribution →</button></form></section>
- <section class="panel">${title("Frequently distributed")}<p class="muted">The same items can be received, distributed, and monitored throughout the site.</p>
- ${["hygiene","socks","water","blankets"].map(id=>{const x=get(id);return `<div class="line"><span><strong>${esc(x.name)}</strong><small>${x.qty} ${esc(x.unit)} available</small></span><button class="mini-btn" data-action="one-out" data-id="${id}" ${x.qty<1?"disabled":""}>Distribute 1</button></div>`}).join("")}
- <div class="note" style="margin-top:16px">Inventory never goes below zero in this demo. Dated stock is deducted from the nearest non-expired batch first when possible.</div></section></div>`;
+ <button class="btn primary" type="submit">Confirm distribution →</button></form>
+ <p class="tiny muted">Inventory cannot go below zero. Dated stock is deducted from the nearest non-expired batch first when possible.</p></section></div>`;
 }
 function alerts(){
  return `<div class="metrics-grid">${stat(shortage().length,"Low-stock items","At or below minimum","warning")}${stat(shortage().filter(x=>x.qty===0).length,"Out of stock","No units remaining","warning")}${stat(expiring().filter(x=>days(x.expiry)<=30).length,"Expiring soon","Within 30 days")}${stat(data.items.filter(x=>!atRisk(x)).length,"Healthy stock","Above minimum","success")}</div>
@@ -406,8 +396,6 @@ document.addEventListener("click",e=>{
  if(nav){e.preventDefault();go(nav.dataset.go);return}
  const target=e.target.closest("[data-action]");if(!target)return;
  const act=target.dataset.action,id=target.dataset.id;
- if(act==="quick"){changeStock(id,1,"Donation","Quick intake");return}
- if(act==="one-out"){changeStock(id,-1,"Distribution","One-click distribution");return}
  if(act==="prefill"){go("receive");const select=document.getElementById("receive-item");if(select)select.value=id;return}
  if(act==="edit"){go("history");const el=document.getElementById("correct-item");if(el){el.value=id;const x=get(id);document.getElementById("correct-existing").innerHTML="Recorded count: <strong>"+x.qty+" "+esc(x.unit)+"</strong>";document.getElementById("correct-qty").value=x.qty;document.getElementById("correct-public").checked=x.public;document.getElementById("correct-public-label").textContent=x.public?"Visible":"Private";el.scrollIntoView?.({block:"center",behavior:"smooth"});}return}
  if(act==="purchase-open"){const x=get(id);if(!x||!x.public){notify("This item is not available for public reporting.");return}purchaseItemId=purchaseItemId===id?null:id;purchaseFeedback="";render();document.getElementById("report-quantity")?.focus?.();return}
