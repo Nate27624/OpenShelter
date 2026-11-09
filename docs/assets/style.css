@@ -1005,32 +1005,9 @@ p{margin:0 0 1em}
   font-weight:700;
   text-transform:uppercase;
 }
-/* Category-heading design comparison: Agency retains the chosen baseline.
-   The other categories vary one visual property at a time. */
-/* A · Agency — reference: white background, 2px soft rust underline. */
-.public-stock-category.header-quiet-band>h3{
+/* Final category-header style selected from Agency reference. */
+.public-stock-category>h3{
   background:#fff;
-  color:#754435;
-  border:0;
-  border-bottom:2px solid #b98574;
-}
-/* B · Clothing — same design, thinner 1px line. */
-.public-stock-category.header-outline>h3{
-  background:#fff;
-  color:#754435;
-  border:0;
-  border-bottom:1px solid #b98574;
-}
-/* C · Food — same design, slightly deeper rust line. */
-.public-stock-category.header-underline>h3{
-  background:#fff;
-  color:#754435;
-  border:0;
-  border-bottom:2px solid #a56e5b;
-}
-/* D · Hygiene — same line, barely warmer off-white background. */
-.public-stock-category.header-soft-accent>h3{
-  background:#fcfaf9;
   color:#754435;
   border:0;
   border-bottom:2px solid #b98574;
