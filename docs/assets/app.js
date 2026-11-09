@@ -220,7 +220,7 @@ return `<div class="block-heading"><h2>${name}</h2>${side}</div>`;
 }
 function urgentRows(limit=99){
  const s=shortage().slice(0,limit);
- return s.length?s.map(x=>`<div class="line"><span><strong>${esc(x.name)}</strong><small>${x.qty} ${esc(x.unit)} remaining · minimum ${x.min}</small></span><div class="line-right"><span class="shortfall">${x.qty===0?"Out":x.min-x.qty+" short"}</span><button class="mini-btn" data-action="prefill" data-id="${x.id}">Receive +</button></div></div>`).join(""):`<div class="empty-state">All items are currently above their minimum thresholds.</div>`
+ return s.length?s.map(x=>`<div class="line"><span><strong>${esc(x.name)}</strong><small>${x.qty} ${esc(x.unit)} remaining · minimum ${x.min}</small></span><div class="line-right"><span class="shortfall">${x.qty===0?"Out":x.min-x.qty+" short"}</span><button class="mini-btn" data-action="prefill" data-id="${x.id}">Receive +</button></div></div>`).join(""):`<div class="empty-state">All items are currently at or above their minimum thresholds.</div>`
 }
 function expiryRows(limit=99){
  const lots=expiring().slice(0,limit);
@@ -324,7 +324,7 @@ function distribute(){
  <p class="tiny muted">Inventory cannot go below zero. Dated stock is deducted from the nearest non-expired batch first when possible.</p></section></div>`;
 }
 function alerts(){
- return `<div class="metrics-grid">${stat(shortage().length,"Low-stock items","Below minimum","warning")}${stat(shortage().filter(x=>x.qty===0).length,"Out of stock","No units remaining","warning")}${stat(expiring().filter(x=>days(x.expiry)<=30).length,"Expiring soon","Within 30 days")}${stat(data.items.filter(x=>!atRisk(x)).length,"Healthy stock","Above minimum","success")}</div>
+ return `<div class="metrics-grid">${stat(shortage().length,"Low-stock items","Below minimum","warning")}${stat(shortage().filter(x=>x.qty===0).length,"Out of stock","No units remaining","warning")}${stat(expiring().filter(x=>days(x.expiry)<=30).length,"Expiring soon","Within 30 days")}${stat(data.items.filter(x=>!atRisk(x)).length,"Healthy stock","At or above minimum","success")}</div>
  <div class="split"><section class="panel">${title("Low-stock watchlist")}<p class="muted">Each item has its own threshold. Receiving a donation updates the list immediately.</p>${urgentRows()}</section>
  <section class="panel">${title("Expiration watch")}<p class="muted">Batches carry their own expiration dates, even when they contain the same item.</p>${expiryRows()}<div class="note" style="margin-top:17px">This is an alerting preview, not a safety determination. Real procedures for expired food and medical supplies must be agreed with staff.</div></section></div>
   <section class="panel alerts-threshold-panel">${title("Minimum stock settings")}<p class="muted">Adjust when an item should trigger a low-stock alert.</p>
