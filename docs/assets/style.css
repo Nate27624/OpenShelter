@@ -995,18 +995,42 @@ p{margin:0 0 1em}
   display:flex;
   align-items:center;
   margin:0;
-  padding:12px 15px;
-  background:#f7f1ee;
-  border-top:1px solid #dfd2cc;
-  border-right:1px solid #dfd2cc;
-  border-bottom:1px solid #dfd2cc;
-  border-left:4px solid #a9422e;
-  color:#60362d;
-  font-size:14px;
-  line-height:1.4;
-  letter-spacing:.065em;
-  font-weight:750;
+  padding:10px 15px;
+  background:#f8f8f8;
+  border-bottom:1px solid #dedede;
+  color:#4d4a48;
+  font-size:13px;
+  line-height:1.5;
+  letter-spacing:.05em;
+  font-weight:700;
   text-transform:uppercase;
+}
+/* Temporary comparison: four restrained category-heading treatments. */
+/* Option 1 — Agency: quiet grey band, close to the previous design. */
+.public-stock-category.header-quiet-band>h3{
+  background:#f7f7f7;
+  border-bottom:1px solid #dbdbdb;
+  color:#4b4947;
+}
+/* Option 2 — Clothing: thin, neutral outline. */
+.public-stock-category.header-outline>h3{
+  background:#fff;
+  border:1px solid #e2e2e2;
+  color:#484848;
+}
+/* Option 3 — Food: white with a restrained underline. */
+.public-stock-category.header-underline>h3{
+  background:#fff;
+  border-bottom:2px solid #b9a7a0;
+  color:#4d4947;
+}
+/* Option 4 — Hygiene: barely warm band with a slim accent. */
+.public-stock-category.header-soft-accent>h3{
+  background:#faf8f7;
+  border-left:2px solid #ba9d92;
+  border-bottom:1px solid #e6e0dd;
+  padding-left:13px;
+  color:#534741;
 }
 .public-stock-row{
   border-bottom:1px solid #e9e6e2;
