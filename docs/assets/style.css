@@ -846,3 +846,106 @@ p{margin:0 0 1em}
  .public-donation-row .status,
  .public-donation-row .report-purchase-btn{grid-column:1;grid-row:auto;justify-self:start}
 }
+
+
+/* Four public inventory quantities per item: on hand, pending, desired and still needed */
+.public-stock-explainer{
+  background:#f8f8f8;
+  border-left:3px solid #939393;
+  padding:13px 17px;
+  margin:0 0 30px;
+  font-size:13px;
+  line-height:1.75;
+  color:#555;
+}
+.public-stock-explainer strong,.public-stock-explainer b{color:#363636}
+.public-item-with-report{
+  padding:17px 0 19px;
+  border-bottom:1px solid #e0e0e0;
+}
+.public-item-heading{
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:space-between;
+  gap:10px;
+  align-items:center;
+  padding:0 0 13px;
+}
+.public-item-heading .availability-item strong{
+  font-size:17px;
+}
+.public-item-heading .status{
+  font-size:12px;
+}
+.public-stock-grid{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  border:1px solid #e5e5e5;
+  background:#fafafa;
+}
+.public-stock-stat{
+  min-width:0;
+  padding:13px 14px 14px;
+  border-right:1px solid #e5e5e5;
+}
+.public-stock-stat:last-child{border-right:0}
+.public-stat-label{
+  color:#545454;
+  font-size:12px;
+  font-weight:650;
+  display:block;
+  line-height:1.45;
+  margin-bottom:5px;
+}
+.public-stock-stat strong{
+  color:#333;
+  font-size:25px;
+  font-weight:550;
+  line-height:1.25;
+}
+.public-stock-stat small{
+  font-size:11px;
+  color:#6c6c6c;
+  display:inline-block;
+  margin-left:5px;
+}
+.public-stat-detail{
+  display:block;
+  color:#797979;
+  font-size:11px;
+  line-height:1.45;
+  margin-top:4px;
+}
+.public-stock-needed strong{
+  color:#a3412d;
+}
+.public-item-action{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:15px;
+  margin-top:14px;
+}
+.public-stock-context{
+  color:#777;
+  font-size:12px;
+  line-height:1.5;
+}
+.public-item-action .report-purchase-btn{
+  flex-shrink:0;
+  padding:8px 12px;
+  font-size:12px;
+}
+@media(max-width:820px){
+  .public-stock-grid{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+  .public-stock-stat:nth-child(2){border-right:0}
+  .public-stock-stat:nth-child(-n+2){border-bottom:1px solid #e5e5e5}
+}
+@media(max-width:520px){
+  .public-stock-stat{padding:11px 10px 12px}
+  .public-stock-stat strong{font-size:22px}
+  .public-stat-label{font-size:12px}
+  .public-item-action{align-items:flex-start;flex-direction:column;gap:10px}
+}
