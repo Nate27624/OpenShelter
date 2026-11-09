@@ -286,7 +286,7 @@ function publicNeeds(){
    <div class="field"><label for="public-cat-filter">Category</label><select id="public-cat-filter"><option value="All">All categories</option>${cats.map(c=>`<option value="${esc(c)}" ${publicCategory===c?"selected":""}>${esc(c)}</option>`).join("")}</select></div>
   </div>
   <div id="public-preview" aria-live="polite">${publicNeedsRows()}</div>
-  <p class="public-stock-note">“On the way” means a donor has reported a purchase that hasn't arrived yet. The stock goal is the shelter's minimum target.</p>
+  <p class="public-stock-note">“On the way” means a donor reported purchasing this item but it hasn't arrived yet. “More needed” accounts for stock already at the shelter and donations reported on the way.</p>
   <div class="public-preview-footnote"><strong>Planning a visit?</strong> Supplies may change or be reserved for other uses. <a href="https://theopenshelter.org/staff-contact-us/" target="_blank" rel="noopener">Contact The Open Shelter</a> to confirm before coming for a specific item.</div>
   <p class="tiny muted"><strong>Prototype only:</strong> All quantities are fictional and stored in this browser. Purchase reports are not sent to shelter staff or shared across devices. Private supplies and storage locations remain hidden.</p>
  </section>`;
