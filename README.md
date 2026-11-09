@@ -17,12 +17,12 @@ The application now has one interconnected workflow:
 - **Receive donations:** One-click common items or detailed receipt; supports new supply types and optional expiration batches.
 - **Distribute supplies:** Item, quantity and reason; avoids negative stock.
 - **Alerts & expiration:** Low-stock alerts, adjustable item-specific minimum thresholds, and batch-level expiration watch.
-- **Public needs:** Donor-facing needs preview with staff-only eligibility toggles.
-- **Activity & corrections:** Transaction history and physical stock reconciliation.
+- **Public Facing:** Read-only visitor preview showing all public-enabled supply types. Items below their minimum are marked as needed; other public items remain listed. Private items and internal stock figures stay hidden.
+- **Activity & Corrections:** Transaction history, physical stock reconciliation, and staff controls for public visibility. Toggling visibility immediately updates the Public Facing preview.
 
 ## Technical approach
 
-This is a GitHub Pages-hosted **demonstration**, written in vanilla HTML/CSS/JavaScript. The pages require no build tooling or backend. The mock inventory is stored only in browser `localStorage` and is **not shared between people, devices or browsers**. Reset using the left navigation control. **Do not enter real or sensitive data.**
+This is a GitHub Pages-hosted **demonstration**, written in vanilla HTML/CSS/JavaScript. The pages require no build tooling or backend. The mock inventory is stored only in browser `localStorage` and is **not shared between people, devices or browsers**. Reset using the **Reset example data** link above the current section. **Do not enter real or sensitive data.**
 
 Proposed production architecture: retain the existing WordPress site for the public donor experience; add an approved public needs widget; create a secure, authenticated inventory API and staff UI with role-based access, server-side audit log, and reliable reconciliation of batches and quantity movements. Do not publish private inventory through GitHub Pages.
 
