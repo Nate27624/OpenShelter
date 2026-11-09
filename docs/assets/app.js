@@ -248,7 +248,7 @@ function publicNeedsRows(){
      </div>
     </div>
     <div class="public-stock-figure public-stock-goal">
-     <div class="public-stock-number public-stock-target public-stock-needed ${needed?"needs-more":"target-met"}" aria-label="More needed: ${needed}"><strong>${needed.toLocaleString()}</strong><span class="public-stock-needed-text">more needed</span></div>
+     ${needed>0?`<div class="public-stock-number public-stock-target public-stock-needed needs-more" aria-label="More needed: ${needed}"><strong>${needed.toLocaleString()}</strong><span class="public-stock-needed-text">more needed</span></div>`:""}
     </div>
     <div class="public-stock-action"><button type="button" class="btn report-purchase-btn" data-action="purchase-open" data-id="${esc(x.id)}" aria-expanded="${opened?"true":"false"}">${opened?"Close form":"I've purchased this"}</button></div>
    </div>
