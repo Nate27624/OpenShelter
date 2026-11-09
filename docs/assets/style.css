@@ -166,7 +166,7 @@ p{margin:0 0 1em}
 .metric-card small{display:block;font-size:12px;color:#777;line-height:1.45;margin-top:3px}
 .metric-card.warning strong{color:#a43a25}
 .metric-card.success strong{color:#39704a}
-.dashboard-grid,.split,.receive-layout,.history-settings{
+.dashboard-grid,.split,.receive-layout{
   display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);
   gap:40px;align-items:start;margin:0 0 34px
 }
@@ -176,8 +176,6 @@ p{margin:0 0 1em}
   grid-template-columns:minmax(0,1fr);
   max-width:760px;
 }
-.history-settings{grid-template-columns:minmax(0,1.22fr) minmax(0,.78fr)}
-.settings-stack{display:grid;gap:38px}
 .panel{
   border:0;border-top:1px solid #dedede;padding:23px 0 10px;
   border-radius:0;background:#fff;box-shadow:none;min-width:0
@@ -400,7 +398,6 @@ p{margin:0 0 1em}
   .site-nav{justify-content:flex-start;gap:2px 18px}
   .wp-page{padding:35px 22px 75px}
   .dashboard-grid,.dashboard-grid.follow-grid{gap:27px}
-  .history-settings{gap:26px}
   .inventory-menu{flex-wrap:wrap}
   .inventory-tab{padding:13px 10px}
 }
@@ -422,8 +419,7 @@ p{margin:0 0 1em}
   .metric-card:nth-child(2){border-right:0}
   .metric-card:nth-child(-n+2){border-bottom:1px solid #e7e7e7}
   .metric-card strong{font-size:31px}
-  .dashboard-grid,.dashboard-grid.follow-grid,.split,.receive-layout,.history-settings,.public-layout{grid-template-columns:1fr;gap:23px}
-  .settings-stack{gap:23px}
+  .dashboard-grid,.dashboard-grid.follow-grid,.split,.receive-layout,.public-layout{grid-template-columns:1fr;gap:23px}
   .form-grid{grid-template-columns:1fr;gap:0}
   .inventory-filters{grid-template-columns:1fr 1fr;gap:12px}
   .inventory-filters .search-field{grid-column:1/-1}
@@ -719,31 +715,6 @@ p{margin:0 0 1em}
  .availability-row .status{grid-column:2;grid-row:2}
  .availability-item{grid-row:1/3}
 }
-
-/* Inline public visibility editor within the physical-count correction form */
-.correction-visibility{
-  padding:16px 0 17px;
-  margin:6px 0 21px;
-  border-top:1px solid #e0e0e0;
-  border-bottom:1px solid #e0e0e0;
-}
-.correction-visibility-heading{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:15px;
-}
-.correction-visibility-heading>strong{
-  font-size:15px;
-  font-weight:600;
-}
-.correction-visibility p{
-  font-size:13px;
-  color:#666;
-  line-height:1.6;
-  margin:9px 0 0;
-}
-
 
 /* Visitor-first public purchase reports and staff confirmation queue.
    Flat WordPress-style elements match the rest of the Open Shelter proposal. */
