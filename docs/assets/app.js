@@ -104,10 +104,6 @@ history:["Activity and settings","Review stock movements, correct a physical cou
 return `${header()}
 <div class="prototype-notice"><div class="prototype-notice-inner"><strong>INVENTORY SYSTEM PROPOSAL</strong> &nbsp; | &nbsp; This is a demonstration, not part of The Open Shelter's live inventory.</div></div>
 <main id="main" class="wp-page">
- <header class="wp-page-header">
-  <h1>INVENTORY MANAGEMENT</h1>
-  <p>A simple way to keep track of supplies received, supplies distributed, and the items The Open Shelter needs most.</p>
- </header>
  <nav class="inventory-menu" aria-label="Inventory management sections">
  ${sections.map(s=>`<a href="#${s[0]}" data-go="${s[0]}" class="inventory-tab ${section===s[0]?"active":""}" ${section===s[0]?'aria-current="page"':""}>${s[1]}${s[0]==="alerts"&&shortage().length?` <span class="nav-count">(${shortage().length})</span>`:""}</a>`).join("")}
  </nav>
