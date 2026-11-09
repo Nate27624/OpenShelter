@@ -41,3 +41,7 @@ The repository is published from `main` / `docs`. See [repository Pages settings
 ## Staff validation before implementation
 
 Confirm actual item taxonomy and storage labels, which items need batch expiration tracking, minimum quantities, how staff approve a public need, who may edit counts and thresholds, and whether one-click inventory actions are usable during a busy donation shift.
+
+## Visual integration with The Open Shelter website
+
+The public prototype deliberately follows the existing [theopenshelter.org](https://theopenshelter.org/) content-page conventions rather than a separate SaaS dashboard aesthetic: official red house logo asset, the seven primary website navigation links, a centered white page, uppercase headings, plain underlined section tabs, simple tables, standard rectangular input fields and buttons, and a quiet footer. The style is independently written to resemble the site's Astra/WordPress presentation; it does not import the site's theme files or modify its WordPress installation. The demo notice remains visible so it cannot be mistaken for a secure staff system.
