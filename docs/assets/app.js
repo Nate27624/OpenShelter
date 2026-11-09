@@ -465,8 +465,6 @@ document.addEventListener("change",e=>{
  if(e.target.id==="receive-location"){const el=document.getElementById("receive-add-location");if(el)el.hidden=e.target.value!=="__add"}
  if(e.target.id==="pending-receipt-location"){const el=document.getElementById("pending-receipt-add-location");if(el)el.hidden=e.target.value!=="__add"}
  if(e.target.id==="distribute-item"){const x=get(e.target.value),el=document.getElementById("distribute-available"),locations=document.getElementById("distribute-location");if(x&&el)el.innerHTML="Available now: <strong>"+x.qty+" "+esc(x.unit)+"</strong>";if(x&&locations)locations.innerHTML='<option value="">Automatic allocation (location not recorded)</option>'+stockLocationOptions(x)}
- if(e.target.id==="correct-item"){const x=get(e.target.value),el=document.getElementById("correct-existing");if(x&&el){el.innerHTML="Recorded count: <strong>"+x.qty+" "+esc(x.unit)+"</strong>";document.getElementById("correct-qty").value=x.qty;document.getElementById("correct-public").checked=x.public;document.getElementById("correct-public-label").textContent=x.public?"Visible":"Private";}}
- if(e.target.id==="correct-public"){const label=document.getElementById("correct-public-label");if(label)label.textContent=e.target.checked?"Visible":"Private"}
 });
 document.addEventListener("submit",e=>{
  const form=e.target;if(!["receive-form","distribute-form","inventory-add-form","purchase-report-form","location-add-form","location-rename-form","location-transfer-form","pending-receipt-form"].includes(form.id)&&!form.dataset?.inventoryEdit&&!form.matches("[data-threshold]"))return;
