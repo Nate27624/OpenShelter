@@ -235,56 +235,54 @@ function publicNeedsRows(){
  const items=visible.filter(x=>(publicCategory==="All"||x.cat===publicCategory)&&`${x.name} ${x.cat}`.toLowerCase().includes(publicSearch.trim().toLowerCase()));
  if(!visible.length)return `<div class="empty-state">No supplies are currently listed publicly.</div>`;
  if(!items.length)return `<div class="empty-state">No supplies match your search. Try another name or category.</div>`;
- const categories=[...new Set(items.map(x=>x.cat))].sort((a,b)=>a.localeCompare(b));
- const itemRow=x=>{
-  const pending=pendingFor(x.id),needed=Math.max(0,x.min-x.qty-pending);
-  const formOpen=purchaseItemId===x.id;
-  return `<div class="simple-supply-item">
-   <div class="simple-supply-main">
-    <div class="simple-supply-name"><h4>${esc(x.name)}</h4></div>
-    <div class="simple-supply-count"><strong>${x.qty.toLocaleString()}</strong><span>${esc(x.unit)} on hand</span></div>
-    <div class="simple-supply-goal"><span>Stock goal:</span><strong>${x.min.toLocaleString()}</strong><span>${esc(x.unit)}</span></div>
-    <button type="button" class="btn small report-purchase-btn" data-action="purchase-open" data-id="${esc(x.id)}" aria-expanded="${formOpen?"true":"false"}">${formOpen?"Close form":"I've purchased this"}</button>
+ const cats=[...new Set(items.map(x=>x.cat))].sort((a,b)=>a.localeCompare(b));
+ const row=x=>{
+  const pending=pendingFor(x.id),needed=Math.max(0,x.min-x.qty-pending),opened=purchaseItemId===x.id;
+  return `<div class="public-stock-row">
+   <div class="public-stock-row-main">
+    <div class="public-stock-item"><h4>${esc(x.name)}</h4></div>
+    <div class="public-stock-number public-stock-have" aria-label="At shelter: ${x.qty} ${esc(x.unit)}"><span class="public-stock-mobile-label">At shelter</span><strong>${x.qty.toLocaleString()}</strong><span class="public-stock-unit">${esc(x.unit)}</span></div>
+    <div class="public-stock-number public-stock-target" aria-label="Stock goal: ${x.min} ${esc(x.unit)}"><span class="public-stock-mobile-label">Stock goal</span><strong>${x.min.toLocaleString()}</strong></div>
+    <div class="public-stock-action"><button type="button" class="btn report-purchase-btn" data-action="purchase-open" data-id="${esc(x.id)}" aria-expanded="${opened?"true":"false"}">${opened?"Close form":"I've purchased this"}</button></div>
    </div>
-   <p class="simple-supply-secondary">
-    <span>On the way: <strong>${pending.toLocaleString()}</strong></span>
-    <span class="simple-supply-need ${needed?"needs-more":"target-met"}">Still needed: <strong>${needed.toLocaleString()}</strong></span>
-   </p>
-   ${formOpen?`<form class="purchase-report-form" id="purchase-report-form"><input type="hidden" name="item" value="${esc(x.id)}">
-    <h4>Report a purchase</h4>
-    <p class="muted">Enter the amount you've purchased for the shelter. This demo report stays in this browser and is not sent to the shelter.</p>
+   <div class="public-stock-meta"><span class="public-stock-needed ${needed?"needs-more":"target-met"}">${needed?`<strong>${needed.toLocaleString()}</strong> more needed`:"Stock goal covered"}</span><span class="public-stock-pending">${pending?`<strong>${pending.toLocaleString()}</strong> ${esc(x.unit)} on the way`:"Nothing on the way yet"}</span></div>
+   ${opened?`<form class="purchase-report-form public-stock-form" id="purchase-report-form"><input type="hidden" name="item" value="${esc(x.id)}">
+    <h4>Report your purchase</h4>
+    <p class="muted">Let the shelter know what you've purchased. This demonstration stores your report only in this browser; it is not sent to staff.</p>
     <div class="form-grid">
       <div class="field"><label for="report-quantity">Quantity purchased (${esc(x.unit)})</label><input name="qty" id="report-quantity" type="number" min="1" max="10000" step="1" value="1" required></div>
-      <div class="field"><label for="report-expected">Expected arrival date <span class="optional">(optional)</span></label><input type="date" name="expected" id="report-expected" min="${day(0)}"></div>
+      <div class="field"><label for="report-expected">Expected arrival <span class="optional">(optional)</span></label><input type="date" name="expected" id="report-expected" min="${day(0)}"></div>
     </div>
     <button type="submit" class="btn primary">Record purchase in demo</button>
-    <p class="tiny muted purchase-privacy-note">Don't enter personal or payment information. Staff must confirm receipt before any stock is added.</p>
+    <p class="tiny muted purchase-privacy-note">Do not enter personal or payment information. Staff would confirm receipt before stock changes.</p>
    </form>`:""}
   </div>`;
  };
- return categories.map(cat=>{
-  const rows=items.filter(x=>x.cat===cat).sort((a,b)=>{
-   const needA=Math.max(0,a.min-a.qty-pendingFor(a.id)),needB=Math.max(0,b.min-b.qty-pendingFor(b.id));
-   return Number(needB>0)-Number(needA>0)||a.name.localeCompare(b.name);
-  });
-  return `<section class="simple-supply-group"><h3>${esc(cat)}</h3><div class="simple-supply-list">${rows.map(itemRow).join("")}</div></section>`;
- }).join("");
+ return `<div class="public-stock-list">
+  <div class="public-stock-column-head" aria-hidden="true"><span>Item</span><span>At shelter</span><span>Stock goal</span><span>Donate</span></div>
+  ${cats.map(cat=>{
+   const rows=items.filter(x=>x.cat===cat).sort((a,b)=>{
+    const needA=Math.max(0,a.min-a.qty-pendingFor(a.id)),needB=Math.max(0,b.min-b.qty-pendingFor(b.id));
+    return Number(needB>0)-Number(needA>0)||a.name.localeCompare(b.name);
+   });
+   return `<section class="public-stock-category"><h3>${esc(cat)}</h3><div class="public-stock-category-rows">${rows.map(row).join("")}</div></section>`;
+  }).join("")}
+ </div>`;
 }
 function publicNeeds(){
  const visible=data.items.filter(x=>x.public);
  const cats=[...new Set(visible.map(x=>x.cat))].sort();
- return `<section class="panel public-facing-preview simple-public-page">
- <div class="simple-public-intro">
-  <h2 class="section-sub">What supplies do we have?</h2>
-  <p>Browse supplies available at The Open Shelter.</p>
- </div>
- ${purchaseFeedback?`<div class="purchase-feedback" role="status">${esc(purchaseFeedback)}</div>`:""}
- <div class="public-availability-filters"><div class="field"><label for="public-item-search">Find an item</label><input type="search" id="public-item-search" placeholder="Search for coats, food, supplies…" value="${esc(publicSearch)}" autocomplete="off"></div>
- <div class="field"><label for="public-cat-filter">Category</label><select id="public-cat-filter"><option value="All">All categories</option>${cats.map(c=>`<option value="${esc(c)}" ${publicCategory===c?"selected":""}>${esc(c)}</option>`).join("")}</select></div></div>
- <p class="simple-public-explainer"><strong>On the way</strong> means purchased but not yet received. <strong>Still needed</strong> compares the stock goal with what is on hand and reported on the way.</p>
- <div id="public-preview" aria-live="polite">${publicNeedsRows()}</div>
- <div class="public-preview-footnote"><strong>Planning a visit?</strong> Listed stock may change or be reserved for other uses. <a href="https://theopenshelter.org/staff-contact-us/" target="_blank" rel="noopener">Check with The Open Shelter</a> before coming for a specific item.</div>
- <p class="tiny muted"><strong>Prototype only:</strong> Quantities are fictional and stored only in this browser. Purchase reports are not sent to the shelter or shared across devices. Private items and storage locations are not displayed.</p>
+ return `<section class="panel public-facing-preview public-stock-page">
+  <div class="public-stock-intro"><h2 class="section-sub">Find the supplies you need</h2><p>See what the shelter currently has, and what supplies would help most.</p></div>
+  ${purchaseFeedback?`<div class="purchase-feedback" role="status">${esc(purchaseFeedback)}</div>`:""}
+  <div class="public-availability-filters">
+   <div class="field"><label for="public-item-search">Search supplies</label><input type="search" id="public-item-search" placeholder="Search for an item…" value="${esc(publicSearch)}" autocomplete="off"></div>
+   <div class="field"><label for="public-cat-filter">Category</label><select id="public-cat-filter"><option value="All">All categories</option>${cats.map(c=>`<option value="${esc(c)}" ${publicCategory===c?"selected":""}>${esc(c)}</option>`).join("")}</select></div>
+  </div>
+  <div id="public-preview" aria-live="polite">${publicNeedsRows()}</div>
+  <p class="public-stock-note">“On the way” means a donor has reported a purchase that hasn't arrived yet. The stock goal is the shelter's minimum target.</p>
+  <div class="public-preview-footnote"><strong>Planning a visit?</strong> Supplies may change or be reserved for other uses. <a href="https://theopenshelter.org/staff-contact-us/" target="_blank" rel="noopener">Contact The Open Shelter</a> to confirm before coming for a specific item.</div>
+  <p class="tiny muted"><strong>Prototype only:</strong> All quantities are fictional and stored in this browser. Purchase reports are not sent to shelter staff or shared across devices. Private supplies and storage locations remain hidden.</p>
  </section>`;
 }
 function historyRows(){
