@@ -508,3 +508,99 @@ p{margin:0 0 1em}
 .alerts-threshold-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 34px}
 .alerts-threshold-grid .threshold-row{min-width:0}
 @media(max-width:750px){.alerts-threshold-grid{grid-template-columns:1fr}}
+
+
+/* Public Facing preview and staff-only visibility controls */
+.public-facing-preview{
+  max-width:900px;
+  padding-top:25px;
+}
+.public-facing-intro{
+  margin:0 0 26px;
+  padding-bottom:21px;
+  border-bottom:1px solid #dfdfdf;
+}
+.public-facing-intro .eyebrow{
+  color:#575757;
+  font-size:12px;
+  margin-bottom:8px;
+  display:block;
+}
+.public-facing-intro .section-sub{
+  font-size:25px;
+  margin-bottom:12px;
+}
+.public-facing-intro .muted{
+  max-width:770px;
+  font-size:15px;
+  margin-bottom:12px;
+}
+.public-facing-total{
+  font-size:13px;
+  font-weight:600;
+  color:#5f5f5f;
+  margin:15px 0 0;
+}
+.public-preview-group{
+  margin-bottom:31px;
+}
+.public-preview-group h3{
+  font-size:19px;
+  font-weight:600;
+  text-transform:uppercase;
+  line-height:1.4;
+  margin:0 0 10px;
+}
+.public-preview-group .muted{
+  font-size:14px;
+}
+.public-preview-group .public-item:first-of-type{
+  border-top:1px solid #e6e6e6;
+}
+.public-dot-neutral{
+  background:#7a7a7a;
+}
+.public-preview-footnote{
+  font-size:13px;
+  line-height:1.7;
+  color:#666;
+  background:#f8f8f8;
+  border-left:3px solid #adadad;
+  padding:13px 15px;
+  margin:8px 0 22px;
+}
+.public-settings-panel{
+  margin-top:44px;
+  padding-top:24px;
+}
+.public-settings-panel .block-heading{
+  margin-bottom:15px;
+}
+.public-settings-panel>.muted{
+  max-width:830px;
+}
+.public-visibility-list{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  column-gap:38px;
+  margin:19px 0 22px;
+}
+.public-visibility-list .visibility-row{
+  min-width:0;
+}
+.public-visibility-list .visibility-row>span:first-child{
+  min-width:0;
+  padding-right:8px;
+}
+@media(max-width:750px){
+  .public-visibility-list{
+    grid-template-columns:1fr;
+    margin-top:12px;
+  }
+  .public-settings-panel{
+    margin-top:31px;
+  }
+  .public-facing-intro .section-sub{
+    font-size:22px;
+  }
+}
