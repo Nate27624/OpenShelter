@@ -43,7 +43,7 @@ const initial=()=>({
 let data;try{data=JSON.parse(localStorage.getItem(storageKey)||"null")}catch{}
 if(!data||!Array.isArray(data.items)||!Array.isArray(data.history)||!Array.isArray(data.lots))data=initial();
 if(!Array.isArray(data.pending))data.pending=[];
-let section=sections.some(s=>"#"+s[0]===location.hash)?location.hash.slice(1):"public";
+let section=location.hash==="#admin"?"overview":sections.some(s=>"#"+s[0]===location.hash)?location.hash.slice(1):"public";
 let search="",filter="All",stockFilter="All",publicSearch="",publicCategory="All",purchaseItemId=null,purchaseFeedback="",noticeTimer;
 const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const get=id=>data.items.find(x=>x.id===id);
@@ -94,6 +94,7 @@ return `<a href="#main" class="skip-link">Skip to inventory content</a>
   </a>
   <nav class="site-nav" aria-label="Open Shelter website navigation">
    <a href="#public" data-go="public" class="site-nav-public" ${section==="public"?'aria-current="page"':""}>PUBLIC FACING</a>
+   <a href="#admin" data-go="admin" class="site-nav-admin" ${section!=="public"?'aria-current="page"':""}>ADMIN VIEW</a>
    <a href="https://theopenshelter.org/who-we-are/" target="_blank" rel="noopener">WHO WE ARE</a>
    <a href="https://theopenshelter.org/services/" target="_blank" rel="noopener">SERVICES</a>
    <a href="https://theopenshelter.org/donate/" target="_blank" rel="noopener">DONATE</a>
@@ -117,15 +118,16 @@ history:["Activity and corrections","Review stock movements, correct physical in
 };
 return `${header()}
 <div class="prototype-notice"><div class="prototype-notice-inner"><strong>INVENTORY SYSTEM PROPOSAL</strong> &nbsp; | &nbsp; This is a demonstration, not part of The Open Shelter's live inventory.</div></div>
-<main id="main" class="wp-page">
- <nav class="inventory-menu" aria-label="Inventory management sections">
- ${sections.map(s=>`<a href="#${s[0]}" data-go="${s[0]}" class="inventory-tab ${s[0]==="public"?"visitor-tab":""} ${section===s[0]?"active":""}" ${section===s[0]?'aria-current="page"':""}>${s[1]}${s[0]==="alerts"&&shortage().length?` <span class="nav-count">(${shortage().length})</span>`:s[0]==="receive"&&pendingReports().length?` <span class="nav-count">(${pendingReports().length})</span>`:""}</a>`).join("")}
+<main id="main" class="wp-page ${section==="public"?"public-mode":"admin-mode"}">
+ ${section==="public"?"":` <nav class="inventory-menu" aria-label="Inventory management sections">
+ ${sections.filter(s=>s[0]!=="public").map(s=>`<a href="#${s[0]}" data-go="${s[0]}" class="inventory-tab ${section===s[0]?"active":""}" ${section===s[0]?'aria-current="page"':""}>${s[1]}${s[0]==="alerts"&&shortage().length?` <span class="nav-count">(${shortage().length})</span>`:s[0]==="receive"&&pendingReports().length?` <span class="nav-count">(${pendingReports().length})</span>`:""}</a>`).join("")}
  </nav>
  <div class="section-header">
   <div><h2>${meta[section][0]}</h2></div>
   ${section==="public"?"":`<div class="heading-buttons"><button class="btn primary" data-go="receive">Receive donation</button><button class="btn" data-go="distribute">Distribute supplies</button></div>`}
  </div>
- <div class="demo-disclaimer"><strong>Sample data only.</strong> This prototype does not have a login or a live database. Information is stored only in your browser. Please do not enter real or sensitive information. <button class="reset-link" data-action="reset">Reset example data</button></div>
+ <div class="demo-disclaimer"><strong>Admin demonstration — not access-restricted.</strong> No login, shared database, or real staff permissions are implemented. All data is fictional and stored only in this browser. Do not enter real or sensitive information. <button class="reset-link" data-action="reset">Reset example data</button></div>
+`}
  <div id="panel">${view()}</div>
 </main>
 <footer class="site-footer">
@@ -317,7 +319,7 @@ function settings(){
 
 function view(){return ({overview,inventory,receive,distribute,alerts,public:publicNeeds,history:settings}[section]||overview)()}
 function render(){root.innerHTML=shell();}
-function go(id){if(!sections.some(x=>x[0]===id))return;section=id;location.hash=id;render();window.scrollTo?.({top:0,behavior:"auto"})}
+function go(id){if(id!=="admin"&&!sections.some(x=>x[0]===id))return;section=id==="admin"?"overview":id;location.hash=id;render();window.scrollTo?.({top:0,behavior:"auto"})}
 document.addEventListener("click",e=>{
  const nav=e.target.closest("[data-go]");
  if(nav){e.preventDefault();go(nav.dataset.go);return}
@@ -405,6 +407,6 @@ document.addEventListener("submit",e=>{
   x.min=min;save();render();notify("Low-stock threshold updated for "+x.name);
  }
 });
-window.addEventListener("hashchange",()=>{const id=location.hash.slice(1);if(sections.some(x=>x[0]===id)&&id!==section){section=id;render();}});
+window.addEventListener("hashchange",()=>{const route=location.hash.slice(1),id=route==="admin"?"overview":route;if((route==="admin"||sections.some(x=>x[0]===route))&&id!==section){section=id;render();}});
 render();
 })();
