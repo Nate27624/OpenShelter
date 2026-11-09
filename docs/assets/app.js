@@ -243,7 +243,7 @@ function stockRows(){
     <div class="inventory-location-counts">
      ${locationBalances(x).map(entry=>`<label class="inventory-location-editor"><span>${esc(entry.location)}</span><input form="${esc(formId)}" type="number" name="locationQty:${encodeURIComponent(entry.location)}" value="${entry.qty}" min="0" max="1000000" step="1" data-inventory-count aria-label="Count at ${esc(entry.location)} for ${esc(x.name)}"></label>`).join("")}
     </div>
-    ${(["Unassigned",...data.locations].filter(loc=>!x.stockLocations.some(entry=>entry.location===loc))).length?`<div class="inventory-location-add"><select form="${esc(formId)}" name="addLocation" aria-label="Assign another location to ${esc(x.name)}"><option value="">＋ Add location…</option>${["Unassigned",...data.locations].filter(loc=>!x.stockLocations.some(entry=>entry.location===loc)).map(loc=>`<option value="${esc(loc)}">${esc(loc)}</option>`).join("")}</select><input form="${esc(formId)}" name="addLocationQty" type="number" value="0" min="0" max="1000000" step="1" data-inventory-count aria-label="Quantity at new location for ${esc(x.name)}"></div>`:""}
+    <div class="inventory-location-add"><select form="${esc(formId)}" name="addLocation" data-inventory-location-choice aria-label="Assign another location to ${esc(x.name)}"><option value="">＋ Add location…</option>${["Unassigned",...data.locations].filter(loc=>!x.stockLocations.some(entry=>entry.location===loc)).map(loc=>`<option value="${esc(loc)}">${esc(loc)}</option>`).join("")}<option value="__new">＋ New storage location…</option></select><input form="${esc(formId)}" name="addLocationQty" type="number" value="0" min="0" max="1000000" step="1" data-inventory-count aria-label="Quantity at new location for ${esc(x.name)}"><input form="${esc(formId)}" type="text" name="newLocationName" maxlength="60" placeholder="New location name" aria-label="New location name for ${esc(x.name)}" data-inventory-new-location hidden></div>
    </td>
    <td>${badge(x)}</td>
    <td><select form="${esc(formId)}" name="visibility" aria-label="Public visibility of ${esc(x.name)}"><option value="private" ${!x.public?"selected":""}>Private</option><option value="public" ${x.public?"selected":""}>Public</option></select></td>
@@ -255,7 +255,7 @@ function stockRows(){
   <td><select form="inventory-add-form" name="category" required aria-label="Category for new supply"><option value="" selected disabled>Choose category…</option>${categoryOptions("")}</select></td>
   <td><output class="inventory-total-count" id="inventory-total-inventory-add-form" aria-label="Total count for new supply">0</output><small class="inventory-total-subtitle">Sum of locations</small></td>
   <td><input form="inventory-add-form" name="min" type="number" min="0" max="1000000" value="10" step="1" required aria-label="Minimum count for new supply"></td>
-  <td class="location-cell"><div class="inventory-location-add inventory-location-add-new"><select form="inventory-add-form" name="location" aria-label="Storage location for new supply"><option value="">Unassigned</option>${locationOptions()}</select><input form="inventory-add-form" name="newLocationQty" type="number" min="0" max="1000000" value="0" step="1" required data-inventory-count aria-label="Count at selected location for new supply"></div><small>Save, then edit to assign counts at additional locations.</small></td>
+  <td class="location-cell"><div class="inventory-location-add inventory-location-add-new"><select form="inventory-add-form" name="location" data-inventory-location-choice aria-label="Storage location for new supply"><option value="">Unassigned</option>${locationOptions()}<option value="__new">＋ New storage location…</option></select><input form="inventory-add-form" name="newLocationQty" type="number" min="0" max="1000000" value="0" step="1" required data-inventory-count aria-label="Count at selected location for new supply"><input form="inventory-add-form" type="text" name="newLocationName" maxlength="60" placeholder="New location name" aria-label="New storage location name" data-inventory-new-location hidden></div><small>Save, then edit to assign counts at additional locations.</small></td>
   <td><small>New item</small></td>
   <td><select form="inventory-add-form" name="visibility" aria-label="Public visibility for new supply"><option value="private" selected>Private</option><option value="public">Public</option></select></td>
   <td><form id="inventory-add-form"></form><button type="submit" form="inventory-add-form" class="btn primary small">Add item</button></td>
@@ -273,7 +273,7 @@ function stockRows(){
  ${!rows.length&&!(inventoryEditMode&&inventoryAddMode)?`<tr><td colspan="${inventoryEditMode?8:7}" class="empty-state">No matching supplies. Clear a filter and try again.</td></tr>`:""}
  </tbody></table></div>
  </div>
- <p class="table-foot">${rows.length} of ${data.items.length} supply types shown. ${inventoryEditMode?"Edit each location count, then save the row. Total count is calculated from all locations. Choose an additional location and quantity to assign stock there. Changes to stored counts are tracked in Activity log.":"Total count is the sum of every storage location. Edit the table to adjust counts at each location, item details, or public visibility."}</p>`;
+ <p class="table-foot">${rows.length} of ${data.items.length} supply types shown. ${inventoryEditMode?"Edit location counts directly and save the row. Reduce one location and increase another to move stock without changing the total. Use “New storage location” to create a shelf in the same row. Changes are tracked in Activity log.":"Total count is the sum of every storage location. Edit the table to adjust counts at each location, item details, or public visibility."}</p>`;
 }
 function inventory(){
  return `<section class="panel">
@@ -486,6 +486,10 @@ document.addEventListener("change",e=>{
  if(e.target.id==="cat-filter"){filter=e.target.value;const pane=document.getElementById("inventory-results");if(pane)pane.innerHTML=stockRows()}
  if(e.target.id==="status-filter"){stockFilter=e.target.value;const pane=document.getElementById("inventory-results");if(pane)pane.innerHTML=stockRows()}
  if(e.target.id==="public-cat-filter"){publicCategory=e.target.value;const pane=document.getElementById("public-preview");if(pane)pane.innerHTML=publicNeedsRows()}
+ if(e.target.matches?.("[data-inventory-location-choice]")){
+  const field=e.target.closest(".inventory-location-add")?.querySelector("[data-inventory-new-location]");
+  if(field){field.hidden=e.target.value!=="__new";if(field.hidden)field.value="";else field.focus?.()}
+ }
  if(e.target.id==="receive-item"){const el=document.getElementById("new-item-fields");if(el)el.hidden=e.target.value!=="__new"}
  if(e.target.id==="receive-location"){const el=document.getElementById("receive-add-location");if(el)el.hidden=e.target.value!=="__add"}
  if(e.target.id==="pending-receipt-location"){const el=document.getElementById("pending-receipt-add-location");if(el)el.hidden=e.target.value!=="__add"}
