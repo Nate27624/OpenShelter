@@ -262,11 +262,19 @@ function stockRows(){
   <td><select form="inventory-add-form" name="visibility" aria-label="Public visibility for new supply"><option value="private" selected>Private</option><option value="public">Public</option></select></td>
   <td><form id="inventory-add-form"></form><button type="submit" form="inventory-add-form" class="btn primary small">Add item</button></td>
  </tr>`;
- return `<div class="table-wrap"><table class="data-table inventory-table ${inventoryEditMode?"inventory-table-editing":""}"><thead><tr><th>Supply</th><th>Category</th><th>Total count</th><th>Minimum</th><th>Location counts</th><th>Status</th><th>Visible</th>${inventoryEditMode?"<th>Save</th>":""}</tr></thead><tbody>
+ return `<div class="inventory-scroll-shell ${inventoryEditMode?"inventory-scroll-editing":""}">
+ ${inventoryEditMode?`<div class="inventory-scroll-controls" id="inventory-scroll-controls" hidden aria-label="Horizontal inventory scrolling">
+  <span>Scroll columns</span>
+  <button type="button" class="mini-btn" data-action="inventory-scroll-left" aria-label="Scroll inventory table left">◀</button>
+  <input type="range" id="inventory-scroll-range" min="0" max="100" value="0" step="1" aria-label="Horizontal inventory table position">
+  <button type="button" class="mini-btn" data-action="inventory-scroll-right" aria-label="Scroll inventory table right">▶</button>
+ </div>`:""}
+ <div class="table-wrap inventory-table-scroll" id="inventory-table-scroll" tabindex="0" aria-label="Inventory table, scroll to view all columns"><table class="data-table inventory-table ${inventoryEditMode?"inventory-table-editing":""}"><thead><tr><th>Supply</th><th>Category</th><th>Total count</th><th>Minimum</th><th>Location counts</th><th>Status</th><th>Visible</th>${inventoryEditMode?"<th>Save</th>":""}</tr></thead><tbody>
  ${rows.map(x=>inventoryEditMode?editable(x):`<tr><td><strong>${esc(x.name)}</strong></td><td>${esc(x.cat)}</td><td><b>${x.qty}</b></td><td>${x.min}</td><td class="location-cell">${esc(locationSummary(x))}</td><td>${badge(x)}</td><td><span class="visibility-chip ${x.public?"published":""}">${x.public?"Public":"Private"}</span></td></tr>`).join("")}
  ${inventoryEditMode&&inventoryAddMode?newRow:""}
  ${!rows.length&&!(inventoryEditMode&&inventoryAddMode)?`<tr><td colspan="${inventoryEditMode?8:7}" class="empty-state">No matching supplies. Clear a filter and try again.</td></tr>`:""}
  </tbody></table></div>
+ </div>
  <p class="table-foot">${rows.length} of ${data.items.length} supply types shown. ${inventoryEditMode?"Edit each location count, then save the row. Total count is calculated from all locations. Choose an additional location and quantity to assign stock there. Changes to stored counts are tracked in Activity log.":"Total count is the sum of every storage location. Edit the table to adjust counts at each location, item details, or public visibility."}</p>`;
 }
 function inventory(){
