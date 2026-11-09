@@ -1124,3 +1124,50 @@ p{margin:0 0 1em}
   .simple-supply-actions{gap:13px}
   .simple-public-explainer{padding:10px 13px}
 }
+
+/* Put quantity on hand first, at the left edge of every public supply row. */
+.simple-supply-top{
+  display:grid;
+  grid-template-columns:minmax(160px,200px) minmax(0,1fr);
+  align-items:center;
+  justify-content:start;
+  column-gap:21px;
+  row-gap:8px;
+}
+.simple-supply-count{
+  min-width:0;
+  justify-content:flex-start;
+}
+.simple-supply-count strong{
+  font-size:30px;
+  font-weight:650;
+}
+.simple-supply-count span{
+  font-size:13px;
+}
+.simple-supply-name{
+  justify-content:flex-start;
+}
+@media(max-width:850px){
+  .simple-supply-top{
+    display:grid;
+    grid-template-columns:minmax(160px,200px) minmax(0,1fr);
+    align-items:center;
+    gap:9px 15px;
+  }
+}
+@media(max-width:520px){
+  .simple-supply-top{
+    grid-template-columns:1fr;
+    gap:6px;
+  }
+  .simple-supply-count{
+    grid-row:1;
+  }
+  .simple-supply-name{
+    grid-row:2;
+  }
+  .simple-supply-count strong{
+    font-size:27px;
+  }
+}
