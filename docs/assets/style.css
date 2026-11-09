@@ -480,3 +480,25 @@ p{margin:0 0 1em}
     margin:0 14px 14px;
   }
 }
+
+/* Activity indicators as quiet, noninteractive text labels */
+.movement-type{
+  display:inline-block;
+  flex:0 0 34px;
+  width:34px;
+  padding:0;
+  border:0;
+  border-radius:0;
+  background:none;
+  box-shadow:none;
+  text-align:left;
+  font-size:11px;
+  font-weight:700;
+  letter-spacing:.02em;
+  line-height:1.4;
+  color:#666;
+  cursor:default;
+  user-select:text;
+}
+.movement-type.outbound{color:#a63f29}
+.movement-type.inbound{color:#437348}
