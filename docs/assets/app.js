@@ -211,10 +211,10 @@ function overview(){
  ${stat(next,"Expiring batches","Within the next 30 days","subtle")}</div>
  <div class="dashboard-grid">
  <section class="panel overview-attention">${title("Needs attention",`<button class="text-link" data-go="alerts">View all alerts →</button>`)}${urgentRows(4)}</section>
- <section class="panel">${title("Recent activity",`<button class="text-link" data-go="history">Full history →</button>`)}${recentRows(4)}</section>
+ <section class="panel overview-expiration">${title("Expiration watch",`<button class="text-link" data-go="alerts">Review batches →</button>`)}${expiryRows(3)}</section>
  </div>
  <div class="dashboard-grid follow-grid">
- <section class="panel">${title("Expiration watch",`<button class="text-link" data-go="alerts">Review batches →</button>`)}${expiryRows(3)}</section>
+ <section class="panel">${title("Recent activity",`<button class="text-link" data-go="history">Full history →</button>`)}${recentRows(4)}</section>
  </div>`;
 }
 function stockRows(){
