@@ -9,7 +9,7 @@ const sections=[
  ["distribute","Distribute supplies","↗"],
  ["alerts","Alerts & expiration","!"],
  ["public","Public needs","♥"],
- ["history","Activity & settings","◷"]
+ ["history","Activity & corrections","◷"]
 ];
 const day=n=>{const d=new Date();d.setHours(12,0,0,0);d.setDate(d.getDate()+n);return d.toISOString().slice(0,10)};
 const initial=()=>({
@@ -99,7 +99,7 @@ receive:["Receive donations","Record items as they arrive. Use quick entry for e
 distribute:["Distribute supplies","Record the supplies given out through day services and outreach."],
 alerts:["Low stock and expiration dates","Check the supplies that are running low and review items approaching their expiration dates."],
 public:["Public needs list","Preview donation needs for the existing website and choose which items are eligible to appear."],
-history:["Activity and settings","Review stock movements, correct a physical count, and maintain minimum quantities."]
+history:["Activity and corrections","Review stock movements and correct physical inventory counts."]
 };
 return `${header()}
 <div class="prototype-notice"><div class="prototype-notice-inner"><strong>INVENTORY SYSTEM PROPOSAL</strong> &nbsp; | &nbsp; This is a demonstration, not part of The Open Shelter's live inventory.</div></div>
@@ -207,7 +207,9 @@ function distribute(){
 function alerts(){
  return `<div class="metrics-grid">${stat(shortage().length,"Low-stock items","At or below minimum","warning")}${stat(shortage().filter(x=>x.qty===0).length,"Out of stock","No units remaining","warning")}${stat(expiring().filter(x=>days(x.expiry)<=30).length,"Expiring soon","Within 30 days")}${stat(data.items.filter(x=>!atRisk(x)).length,"Healthy stock","Above minimum","success")}</div>
  <div class="split"><section class="panel">${title("Low-stock watchlist")}<p class="muted">Each item has its own threshold. Receiving a donation updates the list immediately.</p>${urgentRows()}</section>
- <section class="panel">${title("Expiration watch")}<p class="muted">Batches carry their own expiration dates, even when they contain the same item.</p>${expiryRows()}<div class="note" style="margin-top:17px">This is an alerting preview, not a safety determination. Real procedures for expired food and medical supplies must be agreed with staff.</div></section></div>`;
+ <section class="panel">${title("Expiration watch")}<p class="muted">Batches carry their own expiration dates, even when they contain the same item.</p>${expiryRows()}<div class="note" style="margin-top:17px">This is an alerting preview, not a safety determination. Real procedures for expired food and medical supplies must be agreed with staff.</div></section></div>
+  <section class="panel alerts-threshold-panel">${title("Minimum stock settings")}<p class="muted">Adjust when an item should trigger a low-stock alert.</p>
+ <div class="threshold-list alerts-threshold-grid">${data.items.map(x=>`<form class="threshold-row" data-threshold="${x.id}"><span><strong>${esc(x.name)}</strong><small>${x.qty} in stock</small></span><label class="sr-only" for="min-${x.id}">Minimum for ${esc(x.name)}</label><input id="min-${x.id}" type="number" name="minimum" min="0" step="1" value="${x.min}" required><button type="submit" class="mini-btn">Save</button></form>`).join("")}</div></section>`;
 }
 function publicNeedsRows(){
  const rows=data.items.filter(x=>x.public&&atRisk(x));
@@ -236,8 +238,7 @@ function settings(){
  <div class="field"><label for="correct-reason">Reason for adjustment</label><select name="reason" id="correct-reason"><option>Physical count</option><option>Damaged or discarded</option><option>Missed movement</option><option>Other</option></select></div>
  <button class="btn primary" type="submit">Save count correction →</button></form>
  </section>
- <section class="panel">${title("Minimum stock settings")}<p class="muted">Adjust when an item should trigger a low-stock alert.</p>
- <div class="threshold-list">${data.items.map(x=>`<form class="threshold-row" data-threshold="${x.id}"><span><strong>${esc(x.name)}</strong><small>${x.qty} in stock</small></span><label class="sr-only" for="min-${x.id}">Minimum for ${esc(x.name)}</label><input id="min-${x.id}" type="number" name="minimum" min="0" step="1" value="${x.min}" required><button type="submit" class="mini-btn">Save</button></form>`).join("")}</div></section>
+
  </div></div>`;
 }
 function view(){return ({overview,inventory,receive,distribute,alerts,public:publicNeeds,history:settings}[section]||overview)()}
