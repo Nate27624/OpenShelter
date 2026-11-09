@@ -260,7 +260,7 @@ function publicNeedsRows(){
       <div class="field"><label for="report-expected">Expected arrival <span class="optional">(optional)</span></label><input type="date" name="expected" id="report-expected" min="${day(0)}"></div>
     </div>
     <button type="submit" class="btn primary">Record purchase in demo</button>
-    <p class="tiny muted purchase-privacy-note">Do not enter personal or payment information. Staff would confirm receipt before stock changes.</p>
+    
    </form>`:""}
   </div>`;
  };
