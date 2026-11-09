@@ -72,36 +72,59 @@ function changeStock(id,delta,kind,note){
  movement(kind,id,delta,note);save();render();notify(x.name+": "+(delta>0?"+":"")+delta+" → "+x.qty);return true
 }
 function header(){
-return `<a href="#main" class="skip-link">Skip to inventory</a><header class="sitebar"><div class="sitebar-inner">
- <a class="logo" href="https://theopenshelter.org/" target="_blank" rel="noopener"><img class="site-logo" src="https://theopenshelter.org/wp-content/uploads/2023/11/cropped-OS-Letterhead.jpg" alt=""><span class="brand"><b><span class="brand-the">the</span> Open Shelter</b><small>Staying behind with those left behind.</small></span></a>
- <nav class="site-nav" aria-label="The Open Shelter website"><a href="https://theopenshelter.org/who-we-are/" target="_blank" rel="noopener">WHO WE ARE</a><a href="https://theopenshelter.org/services/" target="_blank" rel="noopener">SERVICES</a><a href="https://theopenshelter.org/donate/" target="_blank" rel="noopener">DONATE</a><a href="https://theopenshelter.org/latest-news/" target="_blank" rel="noopener">LATEST NEWS</a><a href="https://theopenshelter.org/needs-list/" target="_blank" rel="noopener">NEEDS LIST</a><a href="https://theopenshelter.org/staff-contact-us/" target="_blank" rel="noopener">STAFF/CONTACT US</a><a href="https://theopenshelter.org/history/" target="_blank" rel="noopener">HISTORY</a></nav></div></header>
- <div class="prototype-strip"><div class="strip-inner"><span><strong>INVENTORY INTEGRATION PROPOSAL</strong> <span class="divider-dot">·</span> Independent prototype · Fictional data only</span><a href="https://theopenshelter.org/needs-list/" rel="noopener" target="_blank">Existing Needs List ↗</a></div></div>`;
+return `<a href="#main" class="skip-link">Skip to inventory content</a>
+<header class="sitebar">
+ <div class="sitebar-inner">
+  <a class="logo" href="https://theopenshelter.org/" target="_blank" rel="noopener" aria-label="Visit the Open Shelter website">
+   <img class="site-logo" src="https://theopenshelter.org/wp-content/uploads/2023/11/cropped-OS-Letterhead.jpg" width="76" height="90" alt="">
+   <span class="brand"><b><span class="brand-the">the</span> Open Shelter</b><small>Staying behind with those left behind.</small></span>
+  </a>
+  <nav class="site-nav" aria-label="Open Shelter website navigation">
+   <a href="https://theopenshelter.org/who-we-are/" target="_blank" rel="noopener">WHO WE ARE</a>
+   <a href="https://theopenshelter.org/services/" target="_blank" rel="noopener">SERVICES</a>
+   <a href="https://theopenshelter.org/donate/" target="_blank" rel="noopener">DONATE</a>
+   <a href="https://theopenshelter.org/latest-news/" target="_blank" rel="noopener">LATEST NEWS</a>
+   <a href="https://theopenshelter.org/needs-list/" target="_blank" rel="noopener">NEEDS LIST</a>
+   <a href="https://theopenshelter.org/staff-contact-us/" target="_blank" rel="noopener">STAFF/CONTACT US</a>
+   <a href="https://theopenshelter.org/history/" target="_blank" rel="noopener">HISTORY</a>
+  </nav>
+ </div>
+</header>`;
 }
 function shell(){
- const meta={
- overview:["Your inventory, at a glance.","A clear picture of what arrived, what left, and what needs attention."],
- inventory:["Every supply, in one place.","Search stock levels, locations, categories, and public visibility."],
- receive:["Record incoming donations.","One click for familiar supplies; extra details only when useful."],
- distribute:["Record supplies going out.","Log guest and outreach distribution without complicated forms."],
- alerts:["Stay ahead of shortages.","Know what to replenish and which dated supplies need attention."],
- public:["Keep the community informed.","Choose which urgent needs can appear on a public-facing donation page."],
- history:["Review changes and settings.","An auditable record and item-specific alert thresholds."]
- };
- return `${header()}<div class="layout unified-layout"><aside class="sidebar unified-sidebar" aria-label="Inventory sections">
- <a class="sidebar-head" href="#overview" data-go="overview"><span class="sidebar-head-mark">⌂</span><span><b>Inventory hub</b><small>Open Shelter · Prototype</small></span></a>
- <div class="aside-head">WORKSPACE</div>
- ${sections.map(s=>`<a href="#${s[0]}" data-go="${s[0]}" class="aside-item ${section===s[0]?"active":""}"><span class="section-glyph">${s[2]}</span>${s[1]}${s[0]==="alerts"?`<em class="side-count">${shortage().length}</em>`:""}</a>`).join("")}
- <div class="sidebar-tip"><b>One connected experience</b><p>Inventory changes appear in every section. Everything here is sample data saved in your browser.</p><button class="btn small" data-action="reset">Reset sample data</button></div>
- </aside>
- <main id="main" class="content unified-main">
- <div class="breadcrumbs"><a href="https://theopenshelter.org/" target="_blank" rel="noopener">The Open Shelter</a> / Inventory hub / ${sections.find(x=>x[0]===section)[1]}</div>
- <div class="unified-heading"><div><div class="eyebrow">Staff workspace · Demo</div><h1 class="page-title">${meta[section][0]}</h1><p class="lead">${meta[section][1]}</p></div>
- <div class="heading-buttons"><button class="btn primary" data-go="receive">＋ Receive donation</button><button class="btn" data-go="distribute">Distribute ↗</button></div></div>
- <div class="demo-notice"><span class="notice-icon">i</span><p><strong>Prototype only.</strong> There is no backend, login, or connection to the shelter's actual inventory. Do not enter real or sensitive information.</p></div>
+const meta={
+overview:["Overview","Track donations, distributions, shortages, and expiration dates in one place."],
+inventory:["Inventory","View current stock quantities, storage locations, and which items need replenishing."],
+receive:["Receive donations","Record items as they arrive. Use quick entry for everyday supplies or add more details when needed."],
+distribute:["Distribute supplies","Record the supplies given out through day services and outreach."],
+alerts:["Low stock and expiration dates","Check the supplies that are running low and review items approaching their expiration dates."],
+public:["Public needs list","Preview donation needs for the existing website and choose which items are eligible to appear."],
+history:["Activity and settings","Review stock movements, correct a physical count, and maintain minimum quantities."]
+};
+return `${header()}
+<div class="prototype-notice"><div class="prototype-notice-inner"><strong>INVENTORY SYSTEM PROPOSAL</strong> &nbsp; | &nbsp; This is a demonstration, not part of The Open Shelter's live inventory.</div></div>
+<main id="main" class="wp-page">
+ <header class="wp-page-header">
+  <h1>INVENTORY MANAGEMENT</h1>
+  <p>A simple way to keep track of supplies received, supplies distributed, and the items The Open Shelter needs most.</p>
+ </header>
+ <nav class="inventory-menu" aria-label="Inventory management sections">
+ ${sections.map(s=>`<a href="#${s[0]}" data-go="${s[0]}" class="inventory-tab ${section===s[0]?"active":""}" ${section===s[0]?'aria-current="page"':""}>${s[1]}${s[0]==="alerts"&&shortage().length?` <span class="nav-count">(${shortage().length})</span>`:""}</a>`).join("")}
+ </nav>
+ <div class="section-header">
+  <div><h2>${meta[section][0]}</h2><p>${meta[section][1]}</p></div>
+  <div class="heading-buttons"><button class="btn primary" data-go="receive">Receive donation</button><button class="btn" data-go="distribute">Distribute supplies</button></div>
+ </div>
+ <div class="demo-disclaimer"><strong>Sample data only.</strong> This prototype does not have a login or a live database. Information is stored only in your browser. Please do not enter real or sensitive information. <button class="reset-link" data-action="reset">Reset example data</button></div>
  <div id="panel">${view()}</div>
- </main></div>
- <footer class="site-footer"><div class="site-footer-inner"><span>Open Shelter inventory management · Student design proposal · Fictional quantities</span><a href="https://theopenshelter.org/" target="_blank" rel="noopener">Actual shelter website ↗</a></div></footer>
- <div id="toast" class="toast" role="status" aria-live="polite"></div>`;
+</main>
+<footer class="site-footer">
+ <div class="site-footer-inner">
+  <span><b>The Open Shelter</b> · Inventory management proposal · Not an official staff system</span>
+  <span><a href="https://theopenshelter.org/needs-list/" target="_blank" rel="noopener">Needs List</a> · <a href="https://theopenshelter.org/" target="_blank" rel="noopener">Original website</a></span>
+ </div>
+</footer>
+<div id="toast" class="toast" role="status" aria-live="polite"></div>`;
 }
 function stat(value,title,description,kind=""){
  return `<article class="metric-card ${kind}"><strong>${value}</strong><span>${title}</span><small>${description}</small></article>`
