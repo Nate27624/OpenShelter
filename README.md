@@ -28,4 +28,10 @@ The user-provided project PDF and the shelter's current public website inform th
 
 ## Visual design alignment
 
-The prototype uses the official Open Shelter red house image from the existing website, recreates the seven live navigation labels and links, and applies a WordPress/Astra-inspired white layout with plain sans-serif headings, square controls and red accents. This is an independent CSS approximation—not a copy of the site’s compiled CSS or a production theme integration.
+The prototype retains the official Open Shelter house mark and links to the original WordPress website. A single, unified stylesheet (`docs/assets/style.css`) now defines typography, branded accent colors, gallery cards, forms, tables, alerts, keyboard focus styles, and responsive breakpoints. The public gallery has a prominent hero and two distinct review paths: donor-facing and staff-facing concepts.
+
+**Design boundary:** This is a deliberate, independently authored design proposal informed by the existing WordPress/Astra website, not a pixel-identical copy of the site's installed theme. The staff designs remain fictional public mockups, not real inventory tools.
+
+## Review
+
+Open `https://nate27624.github.io/OpenShelter/concepts/` to explore all 20 unique HTML URLs. Internal links move between concepts. The examples share only browser-local test data. Reload the site and use **Reset demo** to restore defaults when needed.
