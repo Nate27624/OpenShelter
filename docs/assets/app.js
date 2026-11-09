@@ -93,6 +93,7 @@ return `<a href="#main" class="skip-link">Skip to inventory content</a>
    <span class="brand"><b><span class="brand-the">the</span> Open Shelter</b><small>Staying behind with those left behind.</small></span>
   </a>
   <nav class="site-nav" aria-label="Open Shelter website navigation">
+   <a href="#public" data-go="public" class="site-nav-public" ${section==="public"?'aria-current="page"':""}>PUBLIC FACING</a>
    <a href="https://theopenshelter.org/who-we-are/" target="_blank" rel="noopener">WHO WE ARE</a>
    <a href="https://theopenshelter.org/services/" target="_blank" rel="noopener">SERVICES</a>
    <a href="https://theopenshelter.org/donate/" target="_blank" rel="noopener">DONATE</a>
