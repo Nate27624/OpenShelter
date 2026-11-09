@@ -42,7 +42,7 @@ const initial=()=>({
 let data;try{data=JSON.parse(localStorage.getItem(storageKey)||"null")}catch{}
 if(!data||!Array.isArray(data.items)||!Array.isArray(data.history)||!Array.isArray(data.lots))data=initial();
 let section=sections.some(s=>"#"+s[0]===location.hash)?location.hash.slice(1):"overview";
-let search="",filter="All",stockFilter="All",noticeTimer;
+let search="",filter="All",stockFilter="All",publicSearch="",publicCategory="All",noticeTimer;
 const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const get=id=>data.items.find(x=>x.id===id);
 const atRisk=x=>x.qty<=x.min;
@@ -98,7 +98,7 @@ inventory:["Inventory","View current stock quantities, storage locations, and wh
 receive:["Receive donations","Record items as they arrive. Use quick entry for everyday supplies or add more details when needed."],
 distribute:["Distribute supplies","Record the supplies given out through day services and outreach."],
 alerts:["Low stock and expiration dates","Check the supplies that are running low and review items approaching their expiration dates."],
-public:["Public facing","Preview which inventory items are currently shown to visitors."],
+public:["Public facing","Check which supplies are currently available to visitors."],
 history:["Activity and corrections","Review stock movements, correct physical inventory counts, and choose public visibility."]
 };
 return `${header()}
@@ -212,24 +212,36 @@ function alerts(){
  <div class="threshold-list alerts-threshold-grid">${data.items.map(x=>`<form class="threshold-row" data-threshold="${x.id}"><span><strong>${esc(x.name)}</strong><small>${x.qty} in stock</small></span><label class="sr-only" for="min-${x.id}">Minimum for ${esc(x.name)}</label><input id="min-${x.id}" type="number" name="minimum" min="0" step="1" value="${x.min}" required><button type="submit" class="mini-btn">Save</button></form>`).join("")}</div></section>`;
 }
 function publicNeedsRows(){
- const visible=data.items.filter(x=>x.public).sort((a,b)=>Number(atRisk(b))-Number(atRisk(a))||a.name.localeCompare(b.name));
- if(!visible.length)return `<div class="empty-state">No items are currently set to public. Staff can enable visibility under Activity & Corrections.</div>`;
- const needed=visible.filter(atRisk);
- const other=visible.filter(x=>!atRisk(x));
- const publicRow=(x,neededNow)=>`<div class="public-item"><span class="public-dot ${neededNow?"":"public-dot-neutral"}" aria-hidden="true"></span><div><strong>${esc(x.name)}</strong><small>${esc(x.cat)}</small></div><span class="status ${neededNow?"low":"ok"}">${neededNow?"Needed":"Listed"}</span></div>`;
- return `<div class="public-preview-group"><h3>Currently needed</h3>${needed.length?needed.map(x=>publicRow(x,true)).join(""):'<p class="muted">No currently visible items are below their minimum stock level.</p>'}</div>
- ${other.length?`<div class="public-preview-group"><h3>Other public items</h3>${other.map(x=>publicRow(x,false)).join("")}</div>`:""}`;
+ const all=data.items.filter(x=>x.public);
+ const items=all.filter(x=>(publicCategory==="All"||x.cat===publicCategory)&&(`${x.name} ${x.cat}`.toLowerCase().includes(publicSearch.trim().toLowerCase())));
+ const sections=[
+   {name:"Available",description:"These items are currently recorded above their low-stock threshold.",list:items.filter(x=>x.qty>0&&!atRisk(x)),status:"Available",statusClass:"ok"},
+   {name:"Limited availability",description:"Some stock is recorded, but quantities are running low.",list:items.filter(x=>x.qty>0&&atRisk(x)),status:"Limited",statusClass:"low"},
+   {name:"Currently unavailable",description:"No units are currently recorded. Check back or contact the shelter.",list:items.filter(x=>x.qty===0),status:"Not available",statusClass:"out"}
+ ];
+ const row=(x,section)=>`<div class="availability-row"><div class="availability-item"><strong>${esc(x.name)}</strong><small>${esc(x.cat)}</small></div><div class="availability-quantity"><strong>${x.qty.toLocaleString()} ${esc(x.unit)}</strong><span>recorded in inventory</span></div><span class="status ${section.statusClass}">${section.status}</span></div>`;
+ if(all.length===0)return `<div class="empty-state">No supplies have been enabled for public viewing. Staff can change this under Activity & Corrections.</div>`;
+ if(items.length===0)return `<div class="empty-state">No public supplies match that search. Try another item or category.</div>`;
+ return `${sections.filter(group=>group.list.length).map(group=>`<section class="availability-group"><div class="availability-group-heading"><h3>${group.name} <span>(${group.list.length})</span></h3><p>${group.description}</p></div><div class="availability-rows">${group.list.map(x=>row(x,group)).join("")}</div></section>`).join("")}`;
 }
 function publicNeeds(){
- const listed=data.items.filter(x=>x.public).length;
+ const visible=data.items.filter(x=>x.public);
+ const availableCount=visible.filter(x=>x.qty>0&&!atRisk(x)).length;
+ const limitedCount=visible.filter(x=>x.qty>0&&atRisk(x)).length;
+ const unavailableCount=visible.filter(x=>x.qty===0).length;
+ const cats=[...new Set(visible.map(x=>x.cat))].sort();
  return `<section class="panel public-facing-preview">
- <div class="public-facing-intro"><span class="eyebrow">PUBLIC-FACING PREVIEW</span>
- <h2 class="section-sub">Supplies shown to visitors</h2>
- <p class="muted">This page previews the items marked public in the inventory system. Items below their minimum stock level appear as needed; other public items remain listed for reference.</p>
- <p class="public-facing-total">${listed} ${listed===1?"item is":"items are"} currently marked public</p></div>
- <div id="public-preview">${publicNeedsRows()}</div>
- <p class="public-preview-footnote">Only public items appear here. Internal quantities, shelf locations, and private supplies are never shown in this preview. Nothing on this demonstration is published to the shelter's live website.</p>
- <a class="btn primary" href="https://theopenshelter.org/needs-list/" target="_blank" rel="noopener">Visit the actual Needs List ↗</a>
+ <div class="public-facing-intro">
+ <span class="eyebrow">PUBLIC-FACING AVAILABILITY PREVIEW</span>
+ <h2 class="section-sub">Check what we have available</h2>
+ <p class="muted">Looking for clothing, food, or everyday essentials? Search the supplies currently recorded at The Open Shelter before deciding whether to visit.</p>
+ <div class="public-availability-summary"><span><b>${availableCount}</b> Available</span><span><b>${limitedCount}</b> Limited</span><span><b>${unavailableCount}</b> Currently unavailable</span></div>
+ </div>
+ <div class="public-availability-filters"><div class="field"><label for="public-item-search">Find a specific item</label><input type="search" id="public-item-search" placeholder="Search supplies..." value="${esc(publicSearch)}" autocomplete="off"></div>
+ <div class="field"><label for="public-cat-filter">Category</label><select id="public-cat-filter"><option value="All">All categories</option>${cats.map(c=>`<option value="${esc(c)}" ${publicCategory===c?"selected":""}>${esc(c)}</option>`).join("")}</select></div></div>
+ <div id="public-preview" aria-live="polite">${publicNeedsRows()}</div>
+ <div class="public-preview-footnote"><strong>Before you visit:</strong> Availability can change throughout the day, and listed quantities do not guarantee that an item can be provided. <a href="https://theopenshelter.org/staff-contact-us/" target="_blank" rel="noopener">Contact The Open Shelter</a> to confirm that the item you need is available.</div>
+ <p class="tiny muted">This is a demonstration using fictional quantities stored in your browser. Only items enabled as public in Activity & Corrections appear here; private supplies and storage locations are hidden. This page is not connected to The Open Shelter's live inventory.</p>
  </section>`;
 }
 function historyRows(){
@@ -270,10 +282,12 @@ document.addEventListener("click",e=>{
 });
 document.addEventListener("input",e=>{
  if(e.target.id==="stock-search"){search=e.target.value;const pane=document.getElementById("inventory-results");if(pane)pane.innerHTML=stockRows();}
+ if(e.target.id==="public-item-search"){publicSearch=e.target.value;const pane=document.getElementById("public-preview");if(pane)pane.innerHTML=publicNeedsRows();}
 });
 document.addEventListener("change",e=>{
  if(e.target.id==="cat-filter"){filter=e.target.value;const pane=document.getElementById("inventory-results");if(pane)pane.innerHTML=stockRows()}
  if(e.target.id==="status-filter"){stockFilter=e.target.value;const pane=document.getElementById("inventory-results");if(pane)pane.innerHTML=stockRows()}
+ if(e.target.id==="public-cat-filter"){publicCategory=e.target.value;const pane=document.getElementById("public-preview");if(pane)pane.innerHTML=publicNeedsRows()}
  if(e.target.id==="receive-item"){const el=document.getElementById("new-item-fields");if(el)el.hidden=e.target.value!=="__new"}
  if(e.target.id==="distribute-item"){const x=get(e.target.value);const el=document.getElementById("distribute-available");if(x&&el)el.innerHTML="Available now: <strong>"+x.qty+" "+esc(x.unit)+"</strong>"}
  if(e.target.id==="correct-item"){const x=get(e.target.value),el=document.getElementById("correct-existing");if(x&&el){el.innerHTML="Recorded count: <strong>"+x.qty+" "+esc(x.unit)+"</strong>";document.getElementById("correct-qty").value=x.qty;}}
