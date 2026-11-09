@@ -10,21 +10,21 @@ All pages under the previous `/concepts/<name>.html` paths redirect into the rel
 
 The [Open Shelter project brief](./docs/) asks for a long-term, user-friendly way to record **donations received** and **supplies distributed**, monitor **low stock**, track **expiring supplies**, and choose which supply needs may be **public**. The current shelter [Needs List](https://theopenshelter.org/needs-list/) already explains donation categories and links to an Amazon list. The prototype is intended to complement that website, **not replace it**.
 
-The application now has one interconnected workflow:
+The application now has one interconnected workflow, with the **visitor-facing experience first** in the navigation and as the default landing view:
 
 - **Overview:** Inventory counts, critical shortages, near-expiration batches, activity, and quick intake.
 - **Inventory:** Searchable categories, quantities, storage locations, public/private indicators and adjustments.
-- **Receive donations:** One-click common items or detailed receipt; supports new supply types and optional expiration batches.
+- **Receive donations:** A pending purchase-reports queue at the top, with staff demo actions to **Mark received** (one-time stock increase and audit entry) or **Dismiss** (no stock change), followed by one-click common items and detailed intake for new supply types and expiration batches.
 - **Distribute supplies:** Item, quantity and reason; avoids negative stock.
 - **Alerts & expiration:** Low-stock alerts, adjustable item-specific minimum thresholds, and batch-level expiration watch.
-- **Public Facing:** Searchable, category-filtered visitor availability preview showing public-enabled supplies with their quantities on hand and **Available / Limited / Not available** statuses. Private items and shelf locations stay hidden; sample quantities update after intake, distribution, or corrections. The prototype tells visitors to confirm availability with the shelter before traveling.
+- **Public Facing (first tab and default view):** Searchable, category-filtered visitor availability preview showing public-enabled supplies with quantities on hand and **Available / Limited / Not available** statuses, plus an **I've purchased this** action for donors. Donors can report the item, quantity, and optional expected arrival date. Public items show unverified reported quantities *on the way*, separately from stock on hand. Private supplies and shelf locations remain hidden. The prototype tells visitors to confirm availability with the shelter before traveling.
 - **Activity & Corrections:** Transaction history and a unified per-item editor. Select a supply from the physical-count correction dropdown, adjust its recorded count or public-visibility toggle, and save both settings together. The Public Facing preview then reflects saved visibility and stock updates.
 
 ## Technical approach
 
-This is a GitHub Pages-hosted **demonstration**, written in vanilla HTML/CSS/JavaScript. The pages require no build tooling or backend. The mock inventory is stored only in browser `localStorage` and is **not shared between people, devices or browsers**. Reset using the **Reset example data** link above the current section. **Do not enter real or sensitive data.**
+This is a GitHub Pages-hosted **demonstration**, written in vanilla HTML/CSS/JavaScript. The pages require no build tooling or backend. The mock inventory is stored only in browser `localStorage` and is **not shared between people, devices or browsers**. **Donor purchase reports are also local to the same browser:** a donor on another device does not create a staff-visible report; nothing is sent to the shelter. The purchase-report and receipt-confirmation interactions are only a proof of concept and should not be promoted as a live donation intake channel. Do not collect personal contact details or payments in this prototype. Reset using the **Reset example data** link above the current section. **Do not enter real or sensitive data.**
 
-Proposed production architecture: retain the existing WordPress site for the public donor experience; add an approved public inventory availability display (and public needs list if desired); create a secure, authenticated inventory API and staff UI with role-based access, server-side audit log, and reliable reconciliation of batches and quantity movements. Do not publish private inventory through GitHub Pages.
+Proposed production architecture: retain the existing WordPress site for the public donor experience; add an approved public inventory availability display and donor purchase-report form; create a secure, authenticated inventory API and staff UI with role-based access, receipt-confirmation queue, server-side audit log, email or workflow notifications as staff prefer, validation/rate limiting for public submissions, and reliable reconciliation of batches and quantity movements. A donor-reported purchase is **not physical inventory** until staff verifies delivery. Do not publish private inventory through GitHub Pages.
 
 ## Files
 
