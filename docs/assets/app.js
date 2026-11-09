@@ -243,13 +243,12 @@ function publicNeedsRows(){
     <div class="public-stock-item">
      <h4>${esc(x.name)}</h4>
      <div class="public-stock-figure public-stock-have">
-      <div class="public-stock-number" aria-label="At shelter: ${x.qty} ${esc(x.unit)}"><strong>${x.qty.toLocaleString()}</strong><span class="public-stock-unit">${esc(x.unit)} on hand</span></div>
+      <div class="public-stock-number" aria-label="At shelter: ${x.qty}"><strong>${x.qty.toLocaleString()}</strong><span class="public-stock-unit">on hand</span></div>
       <small class="public-stock-subline"><strong>${pending.toLocaleString()}</strong> on the way</small>
      </div>
     </div>
     <div class="public-stock-figure public-stock-goal">
-     <div class="public-stock-number public-stock-target" aria-label="Stock goal: ${x.min} ${esc(x.unit)}"><span class="public-stock-mobile-label">Stock goal</span><strong>${x.min.toLocaleString()}</strong></div>
-     <small class="public-stock-subline public-stock-needed ${needed?"needs-more":"target-met"}">${needed?`<strong>${needed.toLocaleString()}</strong> more needed`:"Goal covered"}</small>
+     <div class="public-stock-number public-stock-target public-stock-needed ${needed?"needs-more":"target-met"}" aria-label="More needed: ${needed}"><span class="public-stock-mobile-label">More needed</span><strong>${needed.toLocaleString()}</strong></div>
     </div>
     <div class="public-stock-action"><button type="button" class="btn report-purchase-btn" data-action="purchase-open" data-id="${esc(x.id)}" aria-expanded="${opened?"true":"false"}">${opened?"Close form":"I've purchased this"}</button></div>
    </div>
@@ -257,7 +256,7 @@ function publicNeedsRows(){
     <h4>Report your purchase</h4>
     <p class="muted">Let the shelter know what you've purchased. This demonstration stores your report only in this browser; it is not sent to staff.</p>
     <div class="form-grid">
-      <div class="field"><label for="report-quantity">Quantity purchased (${esc(x.unit)})</label><input name="qty" id="report-quantity" type="number" min="1" max="10000" step="1" value="1" required></div>
+      <div class="field"><label for="report-quantity">Quantity purchased</label><input name="qty" id="report-quantity" type="number" min="1" max="10000" step="1" value="1" required></div>
       <div class="field"><label for="report-expected">Expected arrival <span class="optional">(optional)</span></label><input type="date" name="expected" id="report-expected" min="${day(0)}"></div>
     </div>
     <button type="submit" class="btn primary">Record purchase in demo</button>
@@ -266,7 +265,7 @@ function publicNeedsRows(){
   </div>`;
  };
  return `<div class="public-stock-list">
-  <div class="public-stock-column-head" aria-hidden="true"><span>Item &amp; stock</span><span>Stock goal</span><span>Donate</span></div>
+  <div class="public-stock-column-head" aria-hidden="true"><span>Item &amp; stock</span><span>More needed</span><span>Donate</span></div>
   ${cats.map(cat=>{
    const rows=items.filter(x=>x.cat===cat).sort((a,b)=>{
     const needA=Math.max(0,a.min-a.qty-pendingFor(a.id)),needB=Math.max(0,b.min-b.qty-pendingFor(b.id));
