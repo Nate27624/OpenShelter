@@ -3,12 +3,12 @@
 const root=document.getElementById("app");
 const storageKey="openshelter-unified-inventory-demo-v2";
 const sections=[
+ ["public","Public facing","♥"],
  ["overview","Overview","▦"],
  ["inventory","Inventory","▤"],
  ["receive","Receive donations","＋"],
  ["distribute","Distribute supplies","↗"],
  ["alerts","Alerts & expiration","!"],
- ["public","Public facing","♥"],
  ["history","Activity & corrections","◷"]
 ];
 const day=n=>{const d=new Date();d.setHours(12,0,0,0);d.setDate(d.getDate()+n);return d.toISOString().slice(0,10)};
@@ -33,6 +33,7 @@ const initial=()=>({
   {id:"LOT-106",item:"soup",qty:10,expiry:day(36)},
   {id:"LOT-107",item:"gloves",qty:3,expiry:day(29)}
  ],
+ pending:[],
  history:[
   {id:"TX-0001",kind:"Donation",item:"socks",change:12,note:"Example donation",time:"Today · 9:42 AM"},
   {id:"TX-0002",kind:"Distribution",item:"hygiene",change:-4,note:"Example outreach distribution",time:"Today · 9:15 AM"},
@@ -41,8 +42,9 @@ const initial=()=>({
 });
 let data;try{data=JSON.parse(localStorage.getItem(storageKey)||"null")}catch{}
 if(!data||!Array.isArray(data.items)||!Array.isArray(data.history)||!Array.isArray(data.lots))data=initial();
-let section=sections.some(s=>"#"+s[0]===location.hash)?location.hash.slice(1):"overview";
-let search="",filter="All",stockFilter="All",publicSearch="",publicCategory="All",noticeTimer;
+if(!Array.isArray(data.pending))data.pending=[];
+let section=sections.some(s=>"#"+s[0]===location.hash)?location.hash.slice(1):"public";
+let search="",filter="All",stockFilter="All",publicSearch="",publicCategory="All",purchaseItemId=null,purchaseFeedback="",noticeTimer;
 const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const get=id=>data.items.find(x=>x.id===id);
 const atRisk=x=>x.qty<=x.min;
@@ -58,6 +60,17 @@ const badge=x=>`<span class="status ${x.qty===0?"out":atRisk(x)?"low":"ok"}">${x
 function notify(text){const box=document.getElementById("toast");if(!box)return;box.textContent=text;box.classList.add("show");clearTimeout(noticeTimer);noticeTimer=setTimeout(()=>box.classList.remove("show"),2600)}
 function movement(kind,id,change,note){
  data.history.unshift({id:"TX-"+Date.now().toString(36),kind,item:id,change,note:String(note||""),time:now()});data.history=data.history.slice(0,200);
+}
+
+const pendingReports=()=>data.pending.filter(p=>p.status==="pending");
+const pendingFor=id=>pendingReports().filter(p=>p.item===id).reduce((n,p)=>n+p.qty,0);
+function pendingRows(){
+ const pending=pendingReports().slice().sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+ if(!pending.length)return `<p class="pending-empty">No donor purchase reports are awaiting confirmation.</p>`;
+ return `<div class="pending-list">${pending.map(p=>{
+  const x=get(p.item); if(!x)return "";
+  return `<div class="pending-row"><div class="pending-description"><strong>${esc(x.name)}</strong><small>${p.qty} ${esc(x.unit)} reported purchased · ${esc(p.time||"Recently reported")}${p.expected?" · Expected "+esc(p.expected):""}</small></div><span class="pending-tag">Awaiting receipt</span><div class="pending-actions"><button type="button" class="btn primary small" data-action="pending-receive" data-id="${esc(p.id)}">Mark received</button><button type="button" class="btn small" data-action="pending-dismiss" data-id="${esc(p.id)}">Dismiss</button></div></div>`;
+ }).join("")}</div>`;
 }
 function changeStock(id,delta,kind,note){
  const x=get(id);
@@ -98,18 +111,18 @@ inventory:["Inventory","View current stock quantities, storage locations, and wh
 receive:["Receive donations","Record items as they arrive. Use quick entry for everyday supplies or add more details when needed."],
 distribute:["Distribute supplies","Record the supplies given out through day services and outreach."],
 alerts:["Low stock and expiration dates","Check the supplies that are running low and review items approaching their expiration dates."],
-public:["Public facing","Check which supplies are currently available to visitors."],
+public:["Public facing","Check available supplies and report a purchased donation."],
 history:["Activity and corrections","Review stock movements, correct physical inventory counts, and choose public visibility."]
 };
 return `${header()}
 <div class="prototype-notice"><div class="prototype-notice-inner"><strong>INVENTORY SYSTEM PROPOSAL</strong> &nbsp; | &nbsp; This is a demonstration, not part of The Open Shelter's live inventory.</div></div>
 <main id="main" class="wp-page">
  <nav class="inventory-menu" aria-label="Inventory management sections">
- ${sections.map(s=>`<a href="#${s[0]}" data-go="${s[0]}" class="inventory-tab ${section===s[0]?"active":""}" ${section===s[0]?'aria-current="page"':""}>${s[1]}${s[0]==="alerts"&&shortage().length?` <span class="nav-count">(${shortage().length})</span>`:""}</a>`).join("")}
+ ${sections.map(s=>`<a href="#${s[0]}" data-go="${s[0]}" class="inventory-tab ${s[0]==="public"?"visitor-tab":""} ${section===s[0]?"active":""}" ${section===s[0]?'aria-current="page"':""}>${s[1]}${s[0]==="alerts"&&shortage().length?` <span class="nav-count">(${shortage().length})</span>`:""}</a>`).join("")}
  </nav>
  <div class="section-header">
   <div><h2>${meta[section][0]}</h2></div>
-  <div class="heading-buttons"><button class="btn primary" data-go="receive">Receive donation</button><button class="btn" data-go="distribute">Distribute supplies</button></div>
+  ${section==="public"?"":`<div class="heading-buttons"><button class="btn primary" data-go="receive">Receive donation</button><button class="btn" data-go="distribute">Distribute supplies</button></div>`}
  </div>
  <div class="demo-disclaimer"><strong>Sample data only.</strong> This prototype does not have a login or a live database. Information is stored only in your browser. Please do not enter real or sensitive information. <button class="reset-link" data-action="reset">Reset example data</button></div>
  <div id="panel">${view()}</div>
@@ -141,7 +154,8 @@ function recentRows(limit=6){
 }
 function overview(){
  const next=expiring().filter(l=>days(l.expiry)<=30).length;
- return `<div class="metrics-grid">${stat(available().toLocaleString(),"Units in stock","Across all categories")}
+ const reports=pendingReports().length;
+ return `${reports?`<div class="pending-overview-note"><strong>${reports} purchase ${reports===1?"report is":"reports are"} awaiting receipt.</strong> <button type="button" data-go="receive" class="text-link">Review pending donations →</button></div>`:""}<div class="metrics-grid">${stat(available().toLocaleString(),"Units in stock","Across all categories")}
  ${stat(data.items.length,"Tracked items","Available supply types")}
  ${stat(shortage().length,"Low-stock alerts","Items to replenish","warning")}
  ${stat(next,"Expiring batches","Within the next 30 days","subtle")}</div>
@@ -171,7 +185,12 @@ function inventory(){
  <div id="inventory-results">${stockRows()}</div></section>`;
 }
 function receive(){
- return `<div class="receive-layout">
+ const pending=pendingReports().length;
+ return `<section class="panel pending-section">${title("Pending donor purchases",`<span class="pending-count">${pending} awaiting confirmation</span>`)}
+ <p class="muted">Donors can report purchases on the Public Facing page. Confirm items only after they arrive; reports do not increase inventory on their own.</p>
+ <div id="pending-results">${pendingRows()}</div>
+ <p class="tiny muted">Browser-only demonstration: reports from other visitors or devices do not reach this queue.</p>
+ </section><div class="receive-layout">
  <section class="panel">
  ${title("Fast intake")}<p class="muted">One click adds a standard unit to stock. No unnecessary fields for routine donations.</p>
  <div class="fast-items">${["socks","coats","soup","water","hygiene","deodorant"].map(id=>{const x=get(id);return `<div class="fast-row"><span><strong>${esc(x.name)}</strong><small>${x.qty} ${esc(x.unit)} on hand</small></span><button class="btn primary small" data-action="quick" data-id="${id}">＋ 1 ${esc(x.unit)}</button></div>`}).join("")}</div>
@@ -214,15 +233,31 @@ function alerts(){
 function publicNeedsRows(){
  const all=data.items.filter(x=>x.public);
  const items=all.filter(x=>(publicCategory==="All"||x.cat===publicCategory)&&(`${x.name} ${x.cat}`.toLowerCase().includes(publicSearch.trim().toLowerCase())));
- const sections=[
+ const groups=[
    {name:"Available",description:"These items are currently recorded above their low-stock threshold.",list:items.filter(x=>x.qty>0&&!atRisk(x)),status:"Available",statusClass:"ok"},
    {name:"Limited availability",description:"Some stock is recorded, but quantities are running low.",list:items.filter(x=>x.qty>0&&atRisk(x)),status:"Limited",statusClass:"low"},
    {name:"Currently unavailable",description:"No units are currently recorded. Check back or contact the shelter.",list:items.filter(x=>x.qty===0),status:"Not available",statusClass:"out"}
  ];
- const row=(x,section)=>`<div class="availability-row"><div class="availability-item"><strong>${esc(x.name)}</strong><small>${esc(x.cat)}</small></div><div class="availability-quantity"><strong>${x.qty.toLocaleString()} ${esc(x.unit)}</strong><span>recorded in inventory</span></div><span class="status ${section.statusClass}">${section.status}</span></div>`;
- if(all.length===0)return `<div class="empty-state">No supplies have been enabled for public viewing. Staff can change this under Activity & Corrections.</div>`;
- if(items.length===0)return `<div class="empty-state">No public supplies match that search. Try another item or category.</div>`;
- return `${sections.filter(group=>group.list.length).map(group=>`<section class="availability-group"><div class="availability-group-heading"><h3>${group.name} <span>(${group.list.length})</span></h3><p>${group.description}</p></div><div class="availability-rows">${group.list.map(x=>row(x,group)).join("")}</div></section>`).join("")}`;
+ const row=(x,g)=>{
+  const onWay=pendingFor(x.id);
+  return `<div class="public-item-with-report"><div class="availability-row public-donation-row"><div class="availability-item"><strong>${esc(x.name)}</strong><small>${esc(x.cat)}</small></div>
+   <div class="availability-quantity"><strong>${x.qty.toLocaleString()} ${esc(x.unit)}</strong><span>recorded in inventory</span>${onWay?`<small class="pending-public-note">${onWay} ${esc(x.unit)} donor-reported on the way (unverified)</small>`:""}</div>
+   <span class="status ${g.statusClass}">${g.status}</span>
+   <button type="button" class="btn small report-purchase-btn" data-action="purchase-open" data-id="${esc(x.id)}" aria-expanded="${purchaseItemId===x.id?"true":"false"}" aria-controls="purchase-form-area">${purchaseItemId===x.id?"Close form":"I've purchased this"}</button></div>
+   ${purchaseItemId===x.id?`<form class="purchase-report-form" id="purchase-report-form"><input type="hidden" name="item" value="${esc(x.id)}">
+    <h4>Report your purchase of ${esc(x.name)}</h4>
+    <p class="muted">Tell us what you've purchased so the shelter can plan for its arrival. This is a demonstration only; your report is not sent to the shelter.</p>
+    <div class="form-grid">
+      <div class="field"><label for="report-quantity">Quantity purchased (${esc(x.unit)})</label><input name="qty" id="report-quantity" type="number" min="1" max="10000" step="1" value="1" required></div>
+      <div class="field"><label for="report-expected">Expected arrival date <span class="optional">(optional)</span></label><input type="date" name="expected" id="report-expected" min="${day(0)}"></div>
+    </div>
+    <button type="submit" class="btn primary">Record purchase in demo</button>
+    <p class="tiny muted purchase-privacy-note">Please don't enter names, contact details, or payment information. The report stays only in this browser until staff confirmation is simulated here.</p>
+   </form>`:""}</div>`;
+ };
+ if(!all.length)return `<div class="empty-state">No supplies have been enabled for public viewing. Staff can change this under Activity & Corrections.</div>`;
+ if(!items.length)return `<div class="empty-state">No public supplies match that search. Try another item or category.</div>`;
+ return `${groups.filter(g=>g.list.length).map(g=>`<section class="availability-group"><div class="availability-group-heading"><h3>${g.name} <span>(${g.list.length})</span></h3><p>${g.description}</p></div><div class="availability-rows">${g.list.map(x=>row(x,g)).join("")}</div></section>`).join("")}`;
 }
 function publicNeeds(){
  const visible=data.items.filter(x=>x.public);
@@ -232,16 +267,18 @@ function publicNeeds(){
  const cats=[...new Set(visible.map(x=>x.cat))].sort();
  return `<section class="panel public-facing-preview">
  <div class="public-facing-intro">
- <span class="eyebrow">PUBLIC-FACING AVAILABILITY PREVIEW</span>
+ <span class="eyebrow">PUBLIC-FACING AVAILABILITY & DONATIONS PREVIEW</span>
  <h2 class="section-sub">Check what we have available</h2>
  <p class="muted">Looking for clothing, food, or everyday essentials? Search the supplies currently recorded at The Open Shelter before deciding whether to visit.</p>
+ <p class="public-purchase-intro"><strong>Already purchased something for the shelter?</strong> Select “I've purchased this” beside an item to report what is on its way. Staff confirm receipt before stock is updated.</p>
  <div class="public-availability-summary"><span><b>${availableCount}</b> Available</span><span><b>${limitedCount}</b> Limited</span><span><b>${unavailableCount}</b> Currently unavailable</span></div>
  </div>
+ ${purchaseFeedback?`<div class="purchase-feedback" role="status">${esc(purchaseFeedback)}</div>`:""}
  <div class="public-availability-filters"><div class="field"><label for="public-item-search">Find a specific item</label><input type="search" id="public-item-search" placeholder="Search supplies..." value="${esc(publicSearch)}" autocomplete="off"></div>
  <div class="field"><label for="public-cat-filter">Category</label><select id="public-cat-filter"><option value="All">All categories</option>${cats.map(c=>`<option value="${esc(c)}" ${publicCategory===c?"selected":""}>${esc(c)}</option>`).join("")}</select></div></div>
  <div id="public-preview" aria-live="polite">${publicNeedsRows()}</div>
  <div class="public-preview-footnote"><strong>Before you visit:</strong> Availability can change throughout the day, and listed quantities do not guarantee that an item can be provided. <a href="https://theopenshelter.org/staff-contact-us/" target="_blank" rel="noopener">Contact The Open Shelter</a> to confirm that the item you need is available.</div>
- <p class="tiny muted">This is a demonstration using fictional quantities stored in your browser. Only items enabled as public in Activity & Corrections appear here; private supplies and storage locations are hidden. This page is not connected to The Open Shelter's live inventory.</p>
+ <p class="tiny muted"><strong>Prototype only:</strong> This page uses fictional inventory stored in your browser. Purchase reports are also browser-local and are <strong>not delivered to The Open Shelter</strong>. Only supplies enabled as public appear here; private items and storage locations remain hidden. A real deployment requires an authenticated shared inventory service.</p>
  </section>`;
 }
 function historyRows(){
@@ -280,7 +317,10 @@ document.addEventListener("click",e=>{
  if(act==="one-out"){changeStock(id,-1,"Distribution","One-click distribution");return}
  if(act==="prefill"){go("receive");const select=document.getElementById("receive-item");if(select)select.value=id;return}
  if(act==="edit"){go("history");const el=document.getElementById("correct-item");if(el){el.value=id;const x=get(id);document.getElementById("correct-existing").innerHTML="Recorded count: <strong>"+x.qty+" "+esc(x.unit)+"</strong>";document.getElementById("correct-qty").value=x.qty;document.getElementById("correct-public").checked=x.public;document.getElementById("correct-public-label").textContent=x.public?"Visible":"Private";el.scrollIntoView?.({block:"center",behavior:"smooth"});}return}
- if(act==="reset"){if(!confirm("Restore the fictional inventory to its original sample values?"))return;data=initial();save();search="";filter="All";stockFilter="All";render();notify("Example inventory restored.");return}
+ if(act==="purchase-open"){const x=get(id);if(!x||!x.public){notify("This item is not available for public reporting.");return}purchaseItemId=purchaseItemId===id?null:id;purchaseFeedback="";render();document.getElementById("report-quantity")?.focus?.();return}
+ if(act==="pending-receive"){const p=pendingReports().find(x=>x.id===id),x=p&&get(p.item);if(!p||!x){notify("Report already handled or invalid.");return}if(!Number.isSafeInteger(p.qty)||p.qty<1||x.qty+p.qty>1000000){notify("Cannot receive this quantity.");return}p.status="received";p.completedAt=now();const ok=changeStock(p.item,p.qty,"Donation","Confirmed donor purchase "+p.id);if(!ok){p.status="pending";save();render();}return}
+ if(act==="pending-dismiss"){const p=pendingReports().find(x=>x.id===id);if(!p){notify("Report already handled.");return}if(!confirm("Dismiss this unreceived purchase report? Inventory will not change."))return;p.status="dismissed";p.completedAt=now();movement("Purchase report dismissed",p.item,0,"No receipt confirmed");save();render();notify("Purchase report dismissed; stock unchanged.");return}
+ if(act==="reset"){if(!confirm("Restore the fictional inventory to its original sample values?"))return;data=initial();save();search="";filter="All";stockFilter="All";publicSearch="";publicCategory="All";purchaseItemId=null;purchaseFeedback="";render();notify("Example inventory restored.");return}
 });
 document.addEventListener("input",e=>{
  if(e.target.id==="stock-search"){search=e.target.value;const pane=document.getElementById("inventory-results");if(pane)pane.innerHTML=stockRows();}
@@ -296,9 +336,19 @@ document.addEventListener("change",e=>{
  if(e.target.id==="correct-public"){const label=document.getElementById("correct-public-label");if(label)label.textContent=e.target.checked?"Visible":"Private"}
 });
 document.addEventListener("submit",e=>{
- const form=e.target;if(!["receive-form","distribute-form","correct-form"].includes(form.id)&&!form.matches("[data-threshold]"))return;
+ const form=e.target;if(!["receive-form","distribute-form","correct-form","purchase-report-form"].includes(form.id)&&!form.matches("[data-threshold]"))return;
  e.preventDefault();
  const fd=new FormData(form);
+ if(form.id==="purchase-report-form"){
+  const id=String(fd.get("item")||""),x=get(id),qty=Number(fd.get("qty")),expected=String(fd.get("expected")||"");
+  if(!x||!x.public){notify("That item is not currently public.");return}
+  if(!Number.isSafeInteger(qty)||qty<1||qty>10000){notify("Enter a whole-number quantity between 1 and 10,000.");return}
+  if(expected&&(!/^\d{4}-\d{2}-\d{2}$/.test(expected)||!Number.isFinite(Date.parse(expected+"T12:00:00"))||expected<day(0))){notify("Use a valid future arrival date.");return}
+  data.pending.push({id:"PD-"+Date.now().toString(36)+"-"+Math.random().toString(36).slice(2,8),item:id,qty,expected,status:"pending",time:now(),createdAt:Date.now()});
+  save();purchaseItemId=null;
+  purchaseFeedback="Purchase recorded in this browser demo: "+qty+" "+x.unit+" of "+x.name+" reported on the way. This has NOT been sent to the shelter. Staff confirmation is required before stock increases.";
+  render();notify("Demo purchase report saved locally.");return
+ }
  if(form.id==="receive-form"){
   const raw=String(fd.get("item")),qty=Number(fd.get("qty"));if(!Number.isSafeInteger(qty)||qty<1||qty>1000000){notify("Enter a valid positive quantity.");return}
   let id=raw;
