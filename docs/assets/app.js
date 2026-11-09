@@ -229,7 +229,26 @@ function inventory(){
  <div class="inventory-filters"><div class="field search-field"><label for="stock-search">Search items</label><input id="stock-search" type="search" placeholder="Name, category or shelf…" value="${esc(search)}"></div>
  <div class="field"><label for="cat-filter">Category</label><select id="cat-filter"><option>All</option>${categories().map(c=>`<option ${filter===c?"selected":""}>${esc(c)}</option>`).join("")}</select></div>
  <div class="field"><label for="status-filter">Status</label><select id="status-filter">${["All","Low stock","Public","Private"].map(c=>`<option ${stockFilter===c?"selected":""}>${c}</option>`).join("")}</select></div></div>
- <div id="inventory-results">${stockRows()}</div></section>`;
+ <div id="inventory-results">${stockRows()}</div>
+ </section>
+ <section class="panel storage-management-panel">
+ ${title("Storage locations")}
+ <p class="muted">These locations are shared with Receive donations. Each supply remains one canonical inventory item; its available total is distributed across the locations listed above.</p>
+ <div class="storage-location-list">
+  ${data.locations.map(loc=>`<div class="storage-location-row"><span><strong>${esc(loc)}</strong><small>${locationUsage(loc).toLocaleString()} units recorded</small></span><button type="button" class="mini-btn" data-action="location-remove" data-id="${esc(loc)}" ${locationUsage(loc)?"disabled":""} title="${locationUsage(loc)?"Only empty locations can be removed":"Remove unused location"}">Remove</button></div>`).join("")||'<p class="muted">No storage locations yet.</p>'}
+ </div>
+ <div class="location-admin-grid">
+  <form id="location-add-form" class="location-admin-form">
+   <div class="field"><label for="location-add-name">Add storage location</label><input id="location-add-name" name="name" maxlength="60" placeholder="e.g. Pantry shelf 3" required></div>
+   <button type="submit" class="btn small">Add location</button>
+  </form>
+  <form id="location-rename-form" class="location-admin-form">
+   <div class="field"><label for="location-rename-old">Rename a location</label><select id="location-rename-old" name="oldLocation" required><option value="">Select location…</option>${locationOptions()}</select></div>
+   <div class="field"><label for="location-rename-new">New name</label><input id="location-rename-new" name="newName" maxlength="60" placeholder="New location name" required></div>
+   <button type="submit" class="btn small">Rename location</button>
+  </form>
+ </div>
+ </section>`;
 }
 function receive(){
  const pending=pendingReports().length;
