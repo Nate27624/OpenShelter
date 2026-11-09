@@ -265,7 +265,6 @@ function publicNeedsRows(){
   </div>`;
  };
  return `<div class="public-stock-list">
-  <div class="public-stock-column-head" aria-hidden="true"><span>Item &amp; stock</span><span>More needed</span><span>Donate</span></div>
   ${cats.map(cat=>{
    const rows=items.filter(x=>x.cat===cat).sort((a,b)=>{
     const needA=Math.max(0,a.min-a.qty-pendingFor(a.id)),needB=Math.max(0,b.min-b.qty-pendingFor(b.id));
