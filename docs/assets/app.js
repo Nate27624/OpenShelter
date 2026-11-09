@@ -241,8 +241,8 @@ function publicNeedsRows(){
   const formOpen=purchaseItemId===x.id;
   return `<div class="simple-supply-item">
    <div class="simple-supply-top">
-    <div class="simple-supply-name"><h4>${esc(x.name)}</h4><span class="simple-supply-status ${x.qty===0?"out":"in"}">${x.qty===0?"Out of stock":"In stock"}</span></div>
     <div class="simple-supply-count"><strong>${x.qty.toLocaleString()}</strong><span>${esc(x.unit)} at the shelter now</span></div>
+    <div class="simple-supply-name"><h4>${esc(x.name)}</h4><span class="simple-supply-status ${x.qty===0?"out":"in"}">${x.qty===0?"Out of stock":"In stock"}</span></div>
    </div>
    <div class="simple-supply-bottom">
     <p class="simple-supply-details"><span>On the way: <strong>${pending.toLocaleString()}</strong></span><span>Stock goal: <strong>${x.min.toLocaleString()}</strong></span></p>
