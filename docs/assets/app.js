@@ -260,10 +260,10 @@ function stockRows(){
   <td><select form="inventory-add-form" name="visibility" aria-label="Public visibility for new supply"><option value="private" selected>Private</option><option value="public">Public</option></select></td>
   <td><form id="inventory-add-form"></form><button type="submit" form="inventory-add-form" class="btn primary small">Add item</button></td>
  </tr>`;
- return `${inventoryEditMode?categoryOptions:""}<div class="table-wrap"><table class="data-table inventory-table ${inventoryEditMode?"inventory-table-editing":""}"><thead><tr><th>Supply</th><th>Category</th><th>Available</th><th>Minimum</th><th>Location</th><th>Status</th><th>Visible</th><th>${inventoryEditMode?"Save":""}</th></tr></thead><tbody>
- ${rows.map(x=>inventoryEditMode?editable(x):`<tr><td><strong>${esc(x.name)}</strong></td><td>${esc(x.cat)}</td><td><b>${x.qty}</b> <small>${esc(x.unit)}</small></td><td>${x.min}</td><td class="location-cell">${esc(locationSummary(x))}</td><td>${badge(x)}</td><td><span class="visibility-chip ${x.public?"published":""}">${x.public?"Public":"Private"}</span></td><td></td></tr>`).join("")}
+ return `${inventoryEditMode?categoryOptions:""}<div class="table-wrap"><table class="data-table inventory-table ${inventoryEditMode?"inventory-table-editing":""}"><thead><tr><th>Supply</th><th>Category</th><th>Available</th><th>Minimum</th><th>Location</th><th>Status</th><th>Visible</th>${inventoryEditMode?"<th>Save</th>":""}</tr></thead><tbody>
+ ${rows.map(x=>inventoryEditMode?editable(x):`<tr><td><strong>${esc(x.name)}</strong></td><td>${esc(x.cat)}</td><td><b>${x.qty}</b> <small>${esc(x.unit)}</small></td><td>${x.min}</td><td class="location-cell">${esc(locationSummary(x))}</td><td>${badge(x)}</td><td><span class="visibility-chip ${x.public?"published":""}">${x.public?"Public":"Private"}</span></td></tr>`).join("")}
  ${inventoryEditMode&&inventoryAddMode?newRow:""}
- ${!rows.length&&!(inventoryEditMode&&inventoryAddMode)?`<tr><td colspan="8" class="empty-state">No matching supplies. Clear a filter and try again.</td></tr>`:""}
+ ${!rows.length&&!(inventoryEditMode&&inventoryAddMode)?`<tr><td colspan="${inventoryEditMode?8:7}" class="empty-state">No matching supplies. Clear a filter and try again.</td></tr>`:""}
  </tbody></table></div>
  <p class="table-foot">${rows.length} of ${data.items.length} supply types shown. ${inventoryEditMode?"Save each row to apply changes. An increased total goes to Unassigned unless you move all stock to a location; use Storage locations below for partial transfers.":"Edit this table to change supplies, stock counts, categories, units, minimums, locations, and public visibility."}</p>`;
 }
