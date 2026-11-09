@@ -423,6 +423,16 @@ document.addEventListener("click",e=>{
  if(nav){e.preventDefault();go(nav.dataset.go);return}
  const target=e.target.closest("[data-action]");if(!target)return;
  const act=target.dataset.action,id=target.dataset.id;
+ if(act==="inventory-edit-toggle"){
+  inventoryEditMode=!inventoryEditMode;
+  if(!inventoryEditMode)inventoryAddMode=false;
+  render();return
+ }
+ if(act==="inventory-add-toggle"){
+  if(!inventoryEditMode){inventoryEditMode=true;inventoryAddMode=true;search="";filter="All";stockFilter="All";}
+  else inventoryAddMode=!inventoryAddMode;
+  render();if(inventoryAddMode)document.getElementById("inventory-add-name")?.focus?.();return
+ }
  if(act==="prefill"){go("receive");const select=document.getElementById("receive-item");if(select)select.value=id;return}
 
  if(act==="purchase-open"){const x=get(id);if(!x||!x.public){notify("This item is not available for public reporting.");return}purchaseItemId=purchaseItemId===id?null:id;purchaseFeedback="";render();document.getElementById("report-quantity")?.focus?.();return}
@@ -441,7 +451,7 @@ document.addEventListener("click",e=>{
   data.locations=data.locations.filter(loc=>loc!==id);
   save();render();notify("Unused location removed.");return
  }
- if(act==="reset"){if(!confirm("Restore the fictional inventory to its original sample values?"))return;data=initial();normalizeStockLocations();save();search="";filter="All";stockFilter="All";publicSearch="";publicCategory="All";purchaseItemId=null;purchaseFeedback="";pendingReceiptId=null;render();notify("Example inventory restored.");return}
+ if(act==="reset"){if(!confirm("Restore the fictional inventory to its original sample values?"))return;data=initial();normalizeStockLocations();save();search="";filter="All";stockFilter="All";publicSearch="";publicCategory="All";purchaseItemId=null;purchaseFeedback="";pendingReceiptId=null;inventoryEditMode=false;inventoryAddMode=false;render();notify("Example inventory restored.");return}
 });
 document.addEventListener("input",e=>{
  if(e.target.id==="stock-search"){search=e.target.value;const pane=document.getElementById("inventory-results");if(pane)pane.innerHTML=stockRows();}
@@ -459,9 +469,61 @@ document.addEventListener("change",e=>{
  if(e.target.id==="correct-public"){const label=document.getElementById("correct-public-label");if(label)label.textContent=e.target.checked?"Visible":"Private"}
 });
 document.addEventListener("submit",e=>{
- const form=e.target;if(!["receive-form","distribute-form","correct-form","purchase-report-form","location-add-form","location-rename-form","location-transfer-form","pending-receipt-form"].includes(form.id)&&!form.matches("[data-threshold]"))return;
+ const form=e.target;if(!["receive-form","distribute-form","inventory-add-form","purchase-report-form","location-add-form","location-rename-form","location-transfer-form","pending-receipt-form"].includes(form.id)&&!form.dataset?.inventoryEdit&&!form.matches("[data-threshold]"))return;
  e.preventDefault();
  const fd=new FormData(form);
+ if(form.id==="inventory-add-form"||form.dataset?.inventoryEdit){
+  if(!inventoryEditMode){notify("Enable table editing before saving changes.");return}
+  const id=String(form.dataset?.inventoryEdit||""),existing=id?get(id):null;
+  if(id&&!existing){notify("That inventory item no longer exists.");return}
+  if(!id&&!inventoryAddMode){notify("Use Add item to create a supply.");return}
+  const name=String(fd.get("name")||"").trim(),cat=String(fd.get("category")||"").trim(),unit=String(fd.get("unit")||"").trim();
+  const rawQty=String(fd.get("qty")??""),rawMin=String(fd.get("min")??"");
+  const qty=Number(rawQty),minimum=Number(rawMin),vis=String(fd.get("visibility")||"");
+  if(!name||name.length>80||!cat||cat.length>40||!unit||unit.length>30){
+   notify("Enter a supply name, category, and unit.");return
+  }
+  if(!/^\d+$/.test(rawQty)||!/^\d+$/.test(rawMin)||!Number.isSafeInteger(qty)||qty>1000000||!Number.isSafeInteger(minimum)||minimum>1000000){
+   notify("Enter whole-number quantities and minimums from 0 to 1,000,000.");return
+  }
+  if(vis!=="private"&&vis!=="public"){notify("Choose Public or Private visibility.");return}
+  if(data.items.some(x=>x.id!==id&&x.name.toLowerCase()===name.toLowerCase())){
+   notify("A supply with that name already exists. Edit its row instead.");return
+  }
+  const publicVisible=vis==="public";
+  if(existing){
+   const moveRaw=String(fd.get("moveTo")||"");
+   const moveTo=moveRaw==="Unassigned"?"Unassigned":moveRaw?matchingLocation(moveRaw):"";
+   if(moveRaw&&!moveTo){notify("Select a valid storage location.");return}
+   const diff=qty-existing.qty;
+   const differences=[];
+   if(name!==existing.name)differences.push("Name: "+existing.name+" → "+name);
+   if(cat!==existing.cat)differences.push("Category: "+existing.cat+" → "+cat);
+   if(unit!==existing.unit)differences.push("Unit: "+existing.unit+" → "+unit);
+   if(minimum!==existing.min)differences.push("Minimum: "+existing.min+" → "+minimum);
+   if(publicVisible!==existing.public)differences.push("Visibility: "+(publicVisible?"Public":"Private"));
+   if(moveTo)differences.push("Moved all stock to "+moveTo);
+   if(!diff&&!differences.length){notify("No changes to save.");return}
+   if(diff&&!changeStock(id,diff,"Correction","Count edited directly in Inventory", "",true))return;
+   if(moveTo)existing.stockLocations=qty>0?[{location:moveTo,qty}]:[];
+   existing.name=name;
+   existing.cat=cat;
+   existing.unit=unit;
+   existing.min=minimum;
+   existing.public=publicVisible;
+   existing.qty=existing.stockLocations.reduce((total,entry)=>total+entry.qty,0);
+   if(differences.length)movement("Item edit",id,0,differences.join(" · ").slice(0,250));
+   save();render();notify(name+" updated in inventory.");return
+  }
+  const rawLocation=String(fd.get("location")||"");
+  const newLocation=rawLocation?matchingLocation(rawLocation):"";
+  if(rawLocation&&!newLocation){notify("Select a valid storage location.");return}
+  const createdId="custom-"+Date.now().toString(36)+"-"+Math.random().toString(36).slice(2,9);
+  data.items.push({id:createdId,name,cat,unit,qty,min:minimum,public:publicVisible,stockLocations:qty?[{location:newLocation||"Unassigned",qty}]:[]});
+  movement("Item created",createdId,qty,"Added from Inventory table"+(newLocation?" · Location: "+newLocation:" · Location unassigned"));
+  inventoryAddMode=false;
+  save();render();notify(name+" added to inventory.");return
+ }
  if(form.id==="pending-receipt-form"){
   const reportId=String(fd.get("reportId")||""),p=pendingReports().find(z=>z.id===reportId),x=p&&get(p.item);
   if(!p||!x){pendingReceiptId=null;render();notify("This purchase report is no longer awaiting receipt.");return}
@@ -586,23 +648,6 @@ document.addEventListener("submit",e=>{
   const location=String(fd.get("location")||"");
   const note=String(fd.get("purpose"))+(fd.get("note")?" · "+String(fd.get("note")).slice(0,150):"")+(location?" · From "+location:" · Automatic shelf allocation");
   changeStock(id,-qty,"Distribution",note,location);return;
- }
- if(form.id==="correct-form"){
-  const id=String(fd.get("item")),qty=Number(fd.get("qty")),x=get(id);
-  if(!x||!Number.isSafeInteger(qty)||qty<0||qty>1000000){notify("Enter a valid physical count.");return}
-  const visibility=fd.get("publicVisible")==="on";
-  const quantityChanged=qty!==x.qty;
-  const visibilityChanged=visibility!==x.public;
-  if(!quantityChanged&&!visibilityChanged){notify("No changes to save.");return}
-  x.public=visibility;
-  if(quantityChanged){
-    const diff=qty-x.qty;
-    changeStock(id,diff,"Correction",String(fd.get("reason")||"Physical count"));
-  }else{
-    save();render();
-  }
-  notify(x.name+": "+(quantityChanged?"count updated"+(visibilityChanged?" and ":""):"")+(visibilityChanged?(visibility?"public":"private"):""));
-  return;
  }
  if(form.matches("[data-threshold]")){
   const id=form.dataset.threshold,min=Number(fd.get("minimum")),x=get(id);
