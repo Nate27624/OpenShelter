@@ -99,12 +99,31 @@ out+=`<a class="aside-item ${page===id?"active":""}" href="${cLink(id)}"><span>$
 function shell(inner){$("#app").innerHTML=header()+`<div class="layout">${sidebar()}<main class="content" id="content">${inner}</main></div><footer class="site-footer"><div class="site-footer-inner"><span>Open Shelter inventory integration concepts · Student prototype · Fictional data only</span><span><a target="_blank" rel="noopener" href="https://theopenshelter.org/">Visit original website</a></span></div></footer><div role="status" aria-live="polite" id="toast" class="toast"></div>`}
 function home(){
 const groups=["Community","Receiving","Daily operations","Monitoring","Administration"];
-const cards=arr=>arr.map(([id,title,group,desc])=>`<a href="${cLink(id)}" class="concept-link"><span class="concept-num">${id.slice(0,2)}</span><span><strong>${esc(title)} ↗</strong><small>${esc(desc)}</small></span></a>`).join("");
-return `<div class="breadcrumbs"><a href="https://theopenshelter.org/" target="_blank" rel="noopener">Existing website</a> / Inventory proposal</div><div class="eyebrow">Open Shelter × inventory management</div><h1 class="page-title">An extension to the website,<br>not a replacement.</h1>
-<p class="lead">20 separately linked interface concepts for donation intake, distribution, stock visibility, and public supply needs. Compare designs, click through sample interactions, and identify what would actually save staff time.</p>
-<div class="intro-banners"><section class="intro-banner"><span class="tag public">PUBLIC-FACING INTEGRATION</span><h2>Support the existing Needs List</h2><p>Open Shelter already publishes donation needs. Explore how an optional live-needs component could sit alongside the current webpage and Amazon list — without replacing either.</p><a class="btn primary" href="${cLink("11-public-needs")}">View public widget →</a> <a class="btn" href="https://theopenshelter.org/needs-list/" target="_blank" rel="noopener">Original Needs List ↗</a></section>
-<section class="intro-banner"><span class="tag">STAFF WORKFLOWS · DEMO ONLY</span><h2>Make every donation count</h2><p>A private inventory app, connected later through a secure backend, would help staff record items coming in and going out, spot shortages, and review expiration dates.</p><a class="btn primary" href="${cLink("04-quick-intake")}">Try quick intake →</a> <a class="btn" href="${cLink("01-dashboard")}">Staff overview →</a></section></div>
-<div class="note"><strong>How to review:</strong> Every concept has a unique URL. Changes in these demos are saved <em>only in your browser</em>; there is no live inventory, backend, account system, or connection to Open Shelter.</div>
+const cards=arr=>arr.map(([id,title,group,desc])=>`<a href="${cLink(id)}" class="concept-link" aria-label="Explore ${esc(title)}"><span class="concept-num">${id.slice(0,2)}</span><span><strong>${esc(title)}</strong><small>${esc(desc)}</small></span></a>`).join("");
+return `<div class="breadcrumbs"><a href="https://theopenshelter.org/" target="_blank" rel="noopener">The Open Shelter</a><span>/</span><span>Inventory integration concepts</span></div>
+<section class="hero" aria-labelledby="gallery-title">
+ <div class="hero-main">
+  <div class="eyebrow">The Open Shelter · Design exploration</div>
+  <h1 id="gallery-title">A simpler way to <em>manage what matters.</em></h1>
+  <p>Twenty interactive approaches to receiving donations, keeping essential items in stock, and showing the community what the shelter needs—designed to complement the existing website.</p>
+  <div class="actions"><a class="btn primary" href="${cLink("01-dashboard")}">Explore the concepts →</a><a class="btn" href="https://theopenshelter.org/needs-list/" target="_blank" rel="noopener">Current Needs List ↗</a></div>
+ </div>
+ <div class="hero-aside" aria-label="What is included in the prototype">
+  <div class="aside-label">Explore the proposal</div>
+  <div class="hero-total">20</div>
+  <div class="hero-total-label">individual, interactive webpages</div>
+  <div class="hero-mini-list"><span><b>01</b> Public needs</span><span><b>02</b> Daily operations</span><span><b>03</b> Staff tools</span></div>
+ </div>
+</section>
+<div class="integration-ribbon"><div class="ribbon-symbol" aria-hidden="true">↗</div>
+ <div><strong>Designed as an addition, not a website replacement.</strong><span>The current WordPress website and donation information would remain in place. These screens are proposals for a future, secure inventory system.</span></div>
+ <a target="_blank" rel="noopener" href="https://theopenshelter.org/">Visit original site ↗</a>
+</div>
+<div class="intro-banners">
+ <section class="intro-banner"><span class="tag public">PUBLIC-FACING OPPORTUNITY</span><h2>Keep donors informed</h2><p>An optional needs module could extend the shelter's current donation page while preserving its Amazon list and existing guidance.</p><a class="btn primary" href="${cLink("11-public-needs")}">See public needs concept →</a></section>
+ <section class="intro-banner"><span class="tag">INTERNAL OPERATIONS · PROTOTYPE</span><h2>Make daily inventory easy</h2><p>Quick donation logging, one-step distribution, restock alerts, and expiration tracking—without repetitive forms.</p><a class="btn primary" href="${cLink("04-quick-intake")}">Try donation intake →</a></section>
+</div>
+<div class="note"><strong>Design-review environment:</strong> all inventory counts and transactions are fictional. Changes stay in your browser, not in The Open Shelter's systems. Each concept has its own shareable URL.</div>
 ${groups.map(g=>`<div class="section-head"><h2>${esc(g)}</h2><span class="muted tiny">${concepts.filter(x=>x[2]===g).length} concepts</span></div><div class="concept-list">${cards(concepts.filter(x=>x[2]===g))}</div>`).join("")}`;
 }
 function guide(id){
