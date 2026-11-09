@@ -671,3 +671,27 @@ p{margin:0 0 1em}
  .availability-row .status{grid-column:2;grid-row:2}
  .availability-item{grid-row:1/3}
 }
+
+/* Inline public visibility editor within the physical-count correction form */
+.correction-visibility{
+  padding:16px 0 17px;
+  margin:6px 0 21px;
+  border-top:1px solid #e0e0e0;
+  border-bottom:1px solid #e0e0e0;
+}
+.correction-visibility-heading{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:15px;
+}
+.correction-visibility-heading>strong{
+  font-size:15px;
+  font-weight:600;
+}
+.correction-visibility p{
+  font-size:13px;
+  color:#666;
+  line-height:1.6;
+  margin:9px 0 0;
+}
