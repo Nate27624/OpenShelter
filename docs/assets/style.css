@@ -457,3 +457,7 @@ h1,h2,h3{color:var(--heading)}
  .form-grid{grid-template-columns:1fr}
  .inventory-table{min-width:700px}
 }
+
+/* Final unified-settings layout adjustment */
+.settings-stack{display:grid;gap:16px;align-content:start}
+.settings-stack .panel{min-width:0}
