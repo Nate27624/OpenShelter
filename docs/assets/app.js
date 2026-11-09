@@ -241,15 +241,15 @@ function publicNeedsRows(){
   return `<div class="public-stock-row">
    <div class="public-stock-row-main">
     <div class="public-stock-item"><h4>${esc(x.name)}</h4></div>
-    <div class="public-stock-number public-stock-have" aria-label="At shelter: ${x.qty} ${esc(x.unit)}"><span class="public-stock-mobile-label">At shelter</span><strong>${x.qty.toLocaleString()}</strong><span class="public-stock-unit">${esc(x.unit)}</span></div>
-    <div class="public-stock-number public-stock-target" aria-label="Stock goal: ${x.min} ${esc(x.unit)}"><span class="public-stock-mobile-label">Stock goal</span><strong>${x.min.toLocaleString()}</strong></div>
-    <div class="public-stock-action">
-     <button type="button" class="btn report-purchase-btn" data-action="purchase-open" data-id="${esc(x.id)}" aria-expanded="${opened?"true":"false"}">${opened?"Close form":"I've purchased this"}</button>
-     <div class="public-stock-meta">
-      <span class="public-stock-needed ${needed?"needs-more":"target-met"}">${needed?`<strong>${needed.toLocaleString()}</strong> more needed`:"Stock goal covered"}</span>
-      <span class="public-stock-pending"><strong>${pending.toLocaleString()}</strong> on the way</span>
-     </div>
+    <div class="public-stock-figure public-stock-have">
+     <div class="public-stock-number" aria-label="At shelter: ${x.qty} ${esc(x.unit)}"><span class="public-stock-mobile-label">At shelter</span><strong>${x.qty.toLocaleString()}</strong><span class="public-stock-unit">${esc(x.unit)}</span></div>
+     <small class="public-stock-subline"><strong>${pending.toLocaleString()}</strong> on the way</small>
     </div>
+    <div class="public-stock-figure public-stock-goal">
+     <div class="public-stock-number public-stock-target" aria-label="Stock goal: ${x.min} ${esc(x.unit)}"><span class="public-stock-mobile-label">Stock goal</span><strong>${x.min.toLocaleString()}</strong></div>
+     <small class="public-stock-subline public-stock-needed ${needed?"needs-more":"target-met"}">${needed?`<strong>${needed.toLocaleString()}</strong> more needed`:"Goal covered"}</small>
+    </div>
+    <div class="public-stock-action"><button type="button" class="btn report-purchase-btn" data-action="purchase-open" data-id="${esc(x.id)}" aria-expanded="${opened?"true":"false"}">${opened?"Close form":"I've purchased this"}</button></div>
    </div>
    ${opened?`<form class="purchase-report-form public-stock-form" id="purchase-report-form"><input type="hidden" name="item" value="${esc(x.id)}">
     <h4>Report your purchase</h4>
