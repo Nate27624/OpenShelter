@@ -8,7 +8,7 @@ const sections=[
  ["receive","Receive donations","＋"],
  ["distribute","Distribute supplies","↗"],
  ["alerts","Alerts & expiration","!"],
- ["public","Public needs","♥"],
+ ["public","Public facing","♥"],
  ["history","Activity & corrections","◷"]
 ];
 const day=n=>{const d=new Date();d.setHours(12,0,0,0);d.setDate(d.getDate()+n);return d.toISOString().slice(0,10)};
@@ -98,8 +98,8 @@ inventory:["Inventory","View current stock quantities, storage locations, and wh
 receive:["Receive donations","Record items as they arrive. Use quick entry for everyday supplies or add more details when needed."],
 distribute:["Distribute supplies","Record the supplies given out through day services and outreach."],
 alerts:["Low stock and expiration dates","Check the supplies that are running low and review items approaching their expiration dates."],
-public:["Public needs list","Preview donation needs for the existing website and choose which items are eligible to appear."],
-history:["Activity and corrections","Review stock movements and correct physical inventory counts."]
+public:["Public facing","Preview which inventory items are currently shown to visitors."],
+history:["Activity and corrections","Review stock movements, correct physical inventory counts, and choose public visibility."]
 };
 return `${header()}
 <div class="prototype-notice"><div class="prototype-notice-inner"><strong>INVENTORY SYSTEM PROPOSAL</strong> &nbsp; | &nbsp; This is a demonstration, not part of The Open Shelter's live inventory.</div></div>
@@ -212,24 +212,32 @@ function alerts(){
  <div class="threshold-list alerts-threshold-grid">${data.items.map(x=>`<form class="threshold-row" data-threshold="${x.id}"><span><strong>${esc(x.name)}</strong><small>${x.qty} in stock</small></span><label class="sr-only" for="min-${x.id}">Minimum for ${esc(x.name)}</label><input id="min-${x.id}" type="number" name="minimum" min="0" step="1" value="${x.min}" required><button type="submit" class="mini-btn">Save</button></form>`).join("")}</div></section>`;
 }
 function publicNeedsRows(){
- const rows=data.items.filter(x=>x.public&&atRisk(x));
- return rows.length?rows.map(x=>`<div class="public-item"><span class="public-dot"></span><div><strong>${esc(x.name)}</strong><small>${esc(x.cat)} · Priority donation needed</small></div><span class="status low">Needed</span></div>`).join(""):`<div class="empty-state">No eligible low-stock items currently appear in this preview.</div>`;
+ const visible=data.items.filter(x=>x.public).sort((a,b)=>Number(atRisk(b))-Number(atRisk(a))||a.name.localeCompare(b.name));
+ if(!visible.length)return `<div class="empty-state">No items are currently set to public. Staff can enable visibility under Activity & Corrections.</div>`;
+ const needed=visible.filter(atRisk);
+ const other=visible.filter(x=>!atRisk(x));
+ const publicRow=(x,neededNow)=>`<div class="public-item"><span class="public-dot ${neededNow?"":"public-dot-neutral"}" aria-hidden="true"></span><div><strong>${esc(x.name)}</strong><small>${esc(x.cat)}</small></div><span class="status ${neededNow?"low":"ok"}">${neededNow?"Needed":"Listed"}</span></div>`;
+ return `<div class="public-preview-group"><h3>Currently needed</h3>${needed.length?needed.map(x=>publicRow(x,true)).join(""):'<p class="muted">No currently visible items are below their minimum stock level.</p>'}</div>
+ ${other.length?`<div class="public-preview-group"><h3>Other public items</h3>${other.map(x=>publicRow(x,false)).join("")}</div>`:""}`;
 }
 function publicNeeds(){
- return `<div class="split public-layout">
- <section class="panel"><span class="eyebrow">Donor-facing concept</span><h2 class="section-sub" style="font-size:27px;margin-top:10px">Here's what could help right now.</h2><p class="muted">This preview would supplement the existing WordPress Needs List. No internal counts, shelf locations, or private supply types are published.</p>
+ const listed=data.items.filter(x=>x.public).length;
+ return `<section class="panel public-facing-preview">
+ <div class="public-facing-intro"><span class="eyebrow">PUBLIC-FACING PREVIEW</span>
+ <h2 class="section-sub">Supplies shown to visitors</h2>
+ <p class="muted">This page previews the items marked public in the inventory system. Items below their minimum stock level appear as needed; other public items remain listed for reference.</p>
+ <p class="public-facing-total">${listed} ${listed===1?"item is":"items are"} currently marked public</p></div>
  <div id="public-preview">${publicNeedsRows()}</div>
- <a class="btn primary" href="https://theopenshelter.org/needs-list/" target="_blank" rel="noopener" style="margin-top:18px">Visit actual Needs List ↗</a>
- <p class="tiny muted" style="margin-top:10px">The existing Amazon Needs List remains available on the shelter's website.</p></section>
- <section class="panel">${title("Staff visibility settings")}<p class="muted">Choose whether each supply may appear publicly when stock is low. All edits here are local to the demo.</p>
- <div class="visibility-list">${data.items.map(x=>`<div class="visibility-row"><span><strong>${esc(x.name)}</strong><small>${esc(x.cat)} · ${x.qty} on hand</small></span><label class="toggle-wrap"><span>${x.public?"Public eligible":"Private"}</span><input type="checkbox" class="toggle-input" data-public="${x.id}" ${x.public?"checked":""} aria-label="Allow ${esc(x.name)} on public needs list"><span class="toggle-track"></span></label></div>`).join("")}</div>
- <div class="note" style="margin-top:15px">In production, publishing should require authorized staff approval and server-side permissions. GitHub Pages cannot provide that security.</div></section></div>`;
+ <p class="public-preview-footnote">Only public items appear here. Internal quantities, shelf locations, and private supplies are never shown in this preview. Nothing on this demonstration is published to the shelter's live website.</p>
+ <a class="btn primary" href="https://theopenshelter.org/needs-list/" target="_blank" rel="noopener">Visit the actual Needs List ↗</a>
+ </section>`;
 }
 function historyRows(){
  return `<div class="table-wrap"><table class="data-table"><thead><tr><th>When</th><th>Activity</th><th>Supply</th><th>Change</th><th>Note</th></tr></thead><tbody>${data.history.map(x=>`<tr><td>${esc(x.time)}</td><td>${esc(x.kind)}</td><td><b>${esc(get(x.item)?.name||x.item)}</b></td><td class="${x.change<0?"negative":"positive"}">${x.change>0?"+":""}${x.change}</td><td>${esc(x.note||"—")}</td></tr>`).join("")}</tbody></table></div>`;
 }
 function settings(){
- return `<div class="history-settings"><section class="panel">${title("Activity log")}<p class="muted">Every simulated inventory movement is recorded below. In production this audit log must be server-side and tamper-resistant.</p>${historyRows()}</section>
+ return `<div class="history-settings">
+ <section class="panel">${title("Activity log")}<p class="muted">Every simulated inventory movement is recorded below. In production this audit log must be server-side and tamper-resistant.</p>${historyRows()}</section>
  <div class="settings-stack">
  <section class="panel">${title("Correct a physical count")}<p class="muted">Reconcile the system when a shelf count differs from the recorded quantity. Corrections create an audit entry.</p>
  <form id="correct-form"><div class="field"><label for="correct-item">Supply</label><select name="item" id="correct-item">${opt("coats")}</select></div>
@@ -238,8 +246,13 @@ function settings(){
  <div class="field"><label for="correct-reason">Reason for adjustment</label><select name="reason" id="correct-reason"><option>Physical count</option><option>Damaged or discarded</option><option>Missed movement</option><option>Other</option></select></div>
  <button class="btn primary" type="submit">Save count correction →</button></form>
  </section>
-
- </div></div>`;
+ </div></div>
+ <section class="panel public-settings-panel">
+ ${title("Public visibility",`<button class="text-link" data-go="public">Preview public-facing tab →</button>`)}
+ <p class="muted">Choose which supplies visitors may see. Changes are reflected immediately in the Public Facing preview. Private items stay hidden from that view.</p>
+ <div class="visibility-list public-visibility-list">${data.items.map(x=>`<div class="visibility-row"><span><strong>${esc(x.name)}</strong><small>${esc(x.cat)} · ${x.qty} ${esc(x.unit)} on hand</small></span><label class="toggle-wrap"><span>${x.public?"Public":"Private"}</span><input type="checkbox" class="toggle-input" data-public="${esc(x.id)}" ${x.public?"checked":""} aria-label="Make ${esc(x.name)} public-facing"><span class="toggle-track"></span></label></div>`).join("")}</div>
+ <div class="note">These toggles only affect the browser-based demonstration. A real site would require staff authorization and approval before public publication.</div>
+ </section>`;
 }
 function view(){return ({overview,inventory,receive,distribute,alerts,public:publicNeeds,history:settings}[section]||overview)()}
 function render(){root.innerHTML=shell();}
@@ -264,7 +277,7 @@ document.addEventListener("change",e=>{
  if(e.target.id==="receive-item"){const el=document.getElementById("new-item-fields");if(el)el.hidden=e.target.value!=="__new"}
  if(e.target.id==="distribute-item"){const x=get(e.target.value);const el=document.getElementById("distribute-available");if(x&&el)el.innerHTML="Available now: <strong>"+x.qty+" "+esc(x.unit)+"</strong>"}
  if(e.target.id==="correct-item"){const x=get(e.target.value),el=document.getElementById("correct-existing");if(x&&el){el.innerHTML="Recorded count: <strong>"+x.qty+" "+esc(x.unit)+"</strong>";document.getElementById("correct-qty").value=x.qty;}}
- if(e.target.dataset.public){const x=get(e.target.dataset.public);if(!x)return;x.public=e.target.checked;save();render();notify(x.name+": "+(x.public?"public eligible":"private"))}
+ if(e.target.dataset.public){const x=get(e.target.dataset.public);if(!x)return;x.public=e.target.checked;save();render();notify(x.name+": "+(x.public?"public-facing":"private"))}
 });
 document.addEventListener("submit",e=>{
  const form=e.target;if(!["receive-form","distribute-form","correct-form"].includes(form.id)&&!form.matches("[data-threshold]"))return;
