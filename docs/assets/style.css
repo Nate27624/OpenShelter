@@ -604,3 +604,70 @@ p{margin:0 0 1em}
     font-size:22px;
   }
 }
+
+
+/* Public item availability display, styled to match the plain WordPress page */
+.public-facing-preview{max-width:980px}
+.public-facing-intro{margin-bottom:26px}
+.public-facing-intro .section-sub{margin-bottom:10px}
+.public-availability-summary{
+ display:flex;gap:0;flex-wrap:wrap;
+ margin:24px 0 0;padding:14px 0;
+ border-top:1px solid #dedede;border-bottom:1px solid #dedede
+}
+.public-availability-summary span{
+ display:inline-flex;align-items:center;gap:7px;
+ border-right:1px solid #ddd;padding:3px 22px 3px 0;
+ margin-right:22px;font-size:14px;color:#505050
+}
+.public-availability-summary span:last-child{border-right:0}
+.public-availability-summary b{font-weight:650;font-size:20px;color:#303030}
+.public-availability-filters{
+ display:grid;grid-template-columns:minmax(0,1.7fr) minmax(180px,1fr);
+ gap:18px;margin:0 0 26px;align-items:end
+}
+.public-availability-filters .field{margin-bottom:0}
+.availability-group{margin:0 0 28px}
+.availability-group-heading{
+ display:flex;gap:15px;align-items:baseline;
+ justify-content:space-between;flex-wrap:wrap;
+ padding:0 0 12px;border-bottom:2px solid #ddd;margin:0
+}
+.availability-group-heading h3{
+ font-size:20px;font-weight:600;text-transform:uppercase;
+ line-height:1.4;margin:0
+}
+.availability-group-heading h3 span{
+ font-size:15px;font-weight:400;color:#777
+}
+.availability-group-heading p{
+ color:#676767;font-size:13px;line-height:1.5;margin:0
+}
+.availability-rows{margin-top:1px}
+.availability-row{
+ display:grid;grid-template-columns:minmax(140px,1.4fr) minmax(130px,1fr) minmax(130px,.7fr);
+ align-items:center;gap:16px;
+ padding:16px 0;border-bottom:1px solid #e6e6e6
+}
+.availability-item strong{font-size:16px;color:#333;font-weight:600;display:block}
+.availability-item small{font-size:13px;color:#666;display:block;margin-top:3px}
+.availability-quantity strong{font-size:15px;font-weight:600;color:#353535;display:block}
+.availability-quantity span{font-size:12px;color:#777;display:block;margin-top:3px}
+.availability-row .status{justify-self:start;font-size:13px}
+.public-facing-preview .public-preview-footnote{
+ margin-top:28px;margin-bottom:18px;padding:15px 18px;
+ background:#f7f7f7;border-left:3px solid #8d8d8d;
+ font-size:14px;color:#505050;line-height:1.7
+}
+.public-facing-preview .public-preview-footnote a{text-decoration:underline}
+.public-facing-preview>.tiny{font-size:12px;line-height:1.6;max-width:800px}
+@media(max-width:750px){
+ .public-availability-summary span{margin-right:13px;padding-right:13px;font-size:12px}
+ .public-availability-summary b{font-size:18px}
+ .public-availability-filters{grid-template-columns:1fr;gap:13px}
+ .availability-group-heading{display:block}
+ .availability-group-heading p{margin-top:5px}
+ .availability-row{grid-template-columns:minmax(0,1.2fr) minmax(110px,1fr);gap:9px 14px}
+ .availability-row .status{grid-column:2;grid-row:2}
+ .availability-item{grid-row:1/3}
+}
