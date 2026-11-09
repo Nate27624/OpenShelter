@@ -389,6 +389,7 @@ document.addEventListener("change",e=>{
  if(e.target.id==="status-filter"){stockFilter=e.target.value;const pane=document.getElementById("inventory-results");if(pane)pane.innerHTML=stockRows()}
  if(e.target.id==="public-cat-filter"){publicCategory=e.target.value;const pane=document.getElementById("public-preview");if(pane)pane.innerHTML=publicNeedsRows()}
  if(e.target.id==="receive-item"){const el=document.getElementById("new-item-fields");if(el)el.hidden=e.target.value!=="__new"}
+ if(e.target.id==="receive-location"){const el=document.getElementById("receive-add-location");if(el)el.hidden=e.target.value!=="__add"}
  if(e.target.id==="distribute-item"){const x=get(e.target.value);const el=document.getElementById("distribute-available");if(x&&el)el.innerHTML="Available now: <strong>"+x.qty+" "+esc(x.unit)+"</strong>"}
  if(e.target.id==="correct-item"){const x=get(e.target.value),el=document.getElementById("correct-existing");if(x&&el){el.innerHTML="Recorded count: <strong>"+x.qty+" "+esc(x.unit)+"</strong>";document.getElementById("correct-qty").value=x.qty;document.getElementById("correct-public").checked=x.public;document.getElementById("correct-public-label").textContent=x.public?"Visible":"Private";}}
  if(e.target.id==="correct-public"){const label=document.getElementById("correct-public-label");if(label)label.textContent=e.target.checked?"Visible":"Private"}
@@ -408,22 +409,38 @@ document.addEventListener("submit",e=>{
   render();notify("Demo purchase report saved locally.");return
  }
  if(form.id==="receive-form"){
-  const raw=String(fd.get("item")),qty=Number(fd.get("qty"));if(!Number.isSafeInteger(qty)||qty<1||qty>1000000){notify("Enter a valid positive quantity.");return}
-  let id=raw;
+  const raw=String(fd.get("item")||""),qty=Number(fd.get("qty"));
+  if(!Number.isSafeInteger(qty)||qty<1||qty>1000000){notify("Enter a valid positive quantity.");return}
+  const expiry=String(fd.get("expiry")||"");
+  if(expiry&&isNaN(new Date(expiry+"T12:00:00").getTime())){notify("Use a valid expiration date.");return}
+  const selectedLocation=String(fd.get("location")||"");
+  let location="";
+  if(selectedLocation==="__add"){
+   const typed=cleanLocation(fd.get("newLocation"));
+   if(!validLocation(typed)){notify("Enter a storage location name (up to 60 characters).");return}
+   location=matchingLocation(typed)||typed;
+  }else if(selectedLocation){
+   const match=matchingLocation(selectedLocation);
+   if(!match){notify("Choose a listed storage location or add a new one.");return}
+   location=match;
+  }
+  let id=raw,newItem=null;
   if(raw==="__new"){
    const name=String(fd.get("newName")||"").trim().slice(0,80);
    const unit=String(fd.get("newUnit")||"").trim().slice(0,30);
    const min=Number(fd.get("newMin"));
-   const locationVal=String(fd.get("newLocation")||"").trim().slice(0,24);
-   if(!name||!unit||!Number.isSafeInteger(min)||min<0){notify("Complete the new item's name, unit, and minimum.");return}
-   id="custom-"+Date.now().toString(36);
-   data.items.push({id,name,cat:String(fd.get("newCat")||"Agency"),qty:0,min,unit,location:locationVal||"Unassigned",public:false});
-  }
-  if(!get(id)){notify("Choose a valid supply.");return}
-  const expiry=String(fd.get("expiry")||"");
-  if(expiry&&isNaN(new Date(expiry+"T12:00:00").getTime())){notify("Use a valid expiration date.");return}
+   if(!name||!unit||!Number.isSafeInteger(min)||min<0||min>1000000){notify("Complete the new item's name, unit, and minimum.");return}
+   if(data.items.some(x=>x.name.toLowerCase()===name.toLowerCase())){notify("That supply already exists. Select it from the list instead.");return}
+   id="custom-"+Date.now().toString(36)+"-"+Math.random().toString(36).slice(2,6);
+   newItem={id,name,cat:String(fd.get("newCat")||"Agency"),qty:0,min,unit,stockLocations:[],public:false};
+  }else if(!get(id)){notify("Choose a valid supply.");return}
+  if(location&&!matchingLocation(location))data.locations.push(location);
+  data.locations.sort((a,b)=>a.localeCompare(b));
+  if(newItem)data.items.push(newItem);
   if(expiry)data.lots.push({id:"LOT-"+Date.now().toString(36).toUpperCase(),item:id,qty,expiry});
-  changeStock(id,qty,"Donation",String(fd.get("note")||"Donation intake").slice(0,180));return
+  const note=String(fd.get("note")||"Donation intake").slice(0,180)+(location?" · Stored at "+location:" · Location unassigned");
+  changeStock(id,qty,"Donation",note,location);
+  return;
  }
  if(form.id==="distribute-form"){
   const id=String(fd.get("item")),qty=Number(fd.get("qty"));if(!Number.isSafeInteger(qty)||qty<1||qty>1000000){notify("Enter a valid positive quantity.");return}
