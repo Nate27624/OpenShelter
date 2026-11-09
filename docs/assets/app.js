@@ -108,7 +108,7 @@ return `${header()}
  ${sections.map(s=>`<a href="#${s[0]}" data-go="${s[0]}" class="inventory-tab ${section===s[0]?"active":""}" ${section===s[0]?'aria-current="page"':""}>${s[1]}${s[0]==="alerts"&&shortage().length?` <span class="nav-count">(${shortage().length})</span>`:""}</a>`).join("")}
  </nav>
  <div class="section-header">
-  <div><h2>${meta[section][0]}</h2><p>${meta[section][1]}</p></div>
+  <div><h2>${meta[section][0]}</h2></div>
   <div class="heading-buttons"><button class="btn primary" data-go="receive">Receive donation</button><button class="btn" data-go="distribute">Distribute supplies</button></div>
  </div>
  <div class="demo-disclaimer"><strong>Sample data only.</strong> This prototype does not have a login or a live database. Information is stored only in your browser. Please do not enter real or sensitive information. <button class="reset-link" data-action="reset">Reset example data</button></div>
