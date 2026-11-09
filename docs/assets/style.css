@@ -502,3 +502,9 @@ p{margin:0 0 1em}
 }
 .movement-type.outbound{color:#a63f29}
 .movement-type.inbound{color:#437348}
+
+/* Minimum stock thresholds belong alongside alerts and expiration tracking. */
+.alerts-threshold-panel{margin-top:32px}
+.alerts-threshold-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 34px}
+.alerts-threshold-grid .threshold-row{min-width:0}
+@media(max-width:750px){.alerts-threshold-grid{grid-template-columns:1fr}}
