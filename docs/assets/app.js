@@ -480,51 +480,73 @@ document.addEventListener("submit",e=>{
   if(id&&!existing){notify("That inventory item no longer exists.");return}
   if(!id&&!inventoryAddMode){notify("Use Add item to create a supply.");return}
   const name=String(fd.get("name")||"").trim(),cat=String(fd.get("category")||"").trim(),unit=String(fd.get("unit")||"").trim();
-  const rawQty=String(fd.get("qty")??""),rawMin=String(fd.get("min")??"");
-  const qty=Number(rawQty),minimum=Number(rawMin),vis=String(fd.get("visibility")||"");
+  const rawMin=String(fd.get("min")??""),minimum=Number(rawMin),vis=String(fd.get("visibility")||"");
   if(!name||name.length>80||!cat||cat.length>40||!unit||unit.length>30){
    notify("Enter a supply name, category, and unit.");return
   }
-  if(!/^\d+$/.test(rawQty)||!/^\d+$/.test(rawMin)||!Number.isSafeInteger(qty)||qty>1000000||!Number.isSafeInteger(minimum)||minimum>1000000){
-   notify("Enter whole-number quantities and minimums from 0 to 1,000,000.");return
+  if(!/^\d+$/.test(rawMin)||!Number.isSafeInteger(minimum)||minimum>1000000){
+   notify("Enter a whole-number minimum from 0 to 1,000,000.");return
   }
   if(vis!=="private"&&vis!=="public"){notify("Choose Public or Private visibility.");return}
   if(data.items.some(x=>x.id!==id&&x.name.toLowerCase()===name.toLowerCase())){
    notify("A supply with that name already exists. Edit its row instead.");return
   }
   const publicVisible=vis==="public";
+  const validQty=value=>/^\d+$/.test(value)&&Number.isSafeInteger(Number(value))&&Number(value)<=1000000;
+  const updated=[];
   if(existing){
-   const moveRaw=String(fd.get("moveTo")||"");
-   const moveTo=moveRaw==="Unassigned"?"Unassigned":moveRaw?matchingLocation(moveRaw):"";
-   if(moveRaw&&!moveTo){notify("Select a valid storage location.");return}
-   const diff=qty-existing.qty;
-   const differences=[];
-   if(name!==existing.name)differences.push("Name: "+existing.name+" → "+name);
-   if(cat!==existing.cat)differences.push("Category: "+existing.cat+" → "+cat);
-   if(unit!==existing.unit)differences.push("Unit: "+existing.unit+" → "+unit);
-   if(minimum!==existing.min)differences.push("Minimum: "+existing.min+" → "+minimum);
-   if(publicVisible!==existing.public)differences.push("Visibility: "+(publicVisible?"Public":"Private"));
-   if(moveTo)differences.push("Moved all stock to "+moveTo);
-   if(!diff&&!differences.length){notify("No changes to save.");return}
-   if(diff&&!changeStock(id,diff,"Correction","Count edited directly in Inventory", "",true))return;
-   if(moveTo)existing.stockLocations=qty>0?[{location:moveTo,qty}]:[];
-   existing.name=name;
-   existing.cat=cat;
-   existing.unit=unit;
-   existing.min=minimum;
-   existing.public=publicVisible;
-   existing.qty=existing.stockLocations.reduce((total,entry)=>total+entry.qty,0);
-   if(differences.length)movement("Item edit",id,0,differences.join(" · ").slice(0,250));
-   save();render();notify(name+" updated in inventory.");return
+   for(const entry of locationBalances(existing)){
+    const raw=String(fd.get("locationQty:"+encodeURIComponent(entry.location))??"");
+    if(!validQty(raw)){notify("Enter a valid whole-number count for "+entry.location+".");return}
+    const count=Number(raw);
+    if(count>0)updated.push({location:entry.location,qty:count});
+   }
+   const added=String(fd.get("addLocation")||"");
+   const addRaw=String(fd.get("addLocationQty")??"0");
+   if(added){
+    const loc=added==="Unassigned"?"Unassigned":matchingLocation(added);
+    if(!loc||existing.stockLocations.some(row=>row.location===loc)){notify("Choose a different existing location.");return}
+    if(!validQty(addRaw)||Number(addRaw)<1){notify("Enter a positive whole-number count for the added location.");return}
+    updated.push({location:loc,qty:Number(addRaw)});
+   }else if(addRaw!==""&&(!validQty(addRaw)||Number(addRaw)!==0)){
+    notify("Select a location for the additional quantity.");return
+   }
+  }else{
+   const raw=String(fd.get("newLocationQty")??""),selected=String(fd.get("location")||"");
+   if(!validQty(raw)){notify("Enter a valid whole-number count for the new item.");return}
+   const loc=selected?matchingLocation(selected):"Unassigned";
+   if(!loc){notify("Select a valid location for this supply.");return}
+   if(Number(raw)>0)updated.push({location:loc,qty:Number(raw)});
   }
-  const rawLocation=String(fd.get("location")||"");
-  const newLocation=rawLocation?matchingLocation(rawLocation):"";
-  if(rawLocation&&!newLocation){notify("Select a valid storage location.");return}
+  const total=updated.reduce((sum,row)=>sum+row.qty,0);
+  if(total>1000000){notify("Location counts cannot exceed 1,000,000 in total.");return}
+  if(existing){
+   const diff=total-existing.qty;
+   const changes=[];
+   if(name!==existing.name)changes.push("Name: "+existing.name+" → "+name);
+   if(cat!==existing.cat)changes.push("Category: "+existing.cat+" → "+cat);
+   if(unit!==existing.unit)changes.push("Unit: "+existing.unit+" → "+unit);
+   if(minimum!==existing.min)changes.push("Minimum: "+existing.min+" → "+minimum);
+   if(publicVisible!==existing.public)changes.push("Visibility: "+(publicVisible?"Public":"Private"));
+   const oldCounts=new Map(existing.stockLocations.map(row=>[row.location,row.qty]));
+   const newCounts=new Map(updated.map(row=>[row.location,row.qty]));
+   const allocated=[...new Set([...oldCounts.keys(),...newCounts.keys()])].sort((a,b)=>a.localeCompare(b));
+   const locationChanges=allocated.filter(loc=>(oldCounts.get(loc)||0)!==(newCounts.get(loc)||0))
+    .map(loc=>loc+": "+(oldCounts.get(loc)||0)+" → "+(newCounts.get(loc)||0));
+   if(!changes.length&&!locationChanges.length){notify("No changes to save.");return}
+   /* Keep dated-lot deductions consistent on a count decrease. The direct
+      per-location balances replace the automatic allocation after this adjustment. */
+   if(diff&&!changeStock(id,diff,"Correction","Physical count updated from Inventory locations","",true))return;
+   existing.stockLocations=updated;
+   existing.qty=total;
+   existing.name=name;existing.cat=cat;existing.unit=unit;existing.min=minimum;existing.public=publicVisible;
+   if(changes.length||locationChanges.length)movement("Item edit",id,0,[...changes,...locationChanges].join(" · ").slice(0,500));
+   save();render();notify(name+" updated. Total: "+total.toLocaleString());return
+  }
   const createdId="custom-"+Date.now().toString(36)+"-"+Math.random().toString(36).slice(2,9);
-  data.items.push({id:createdId,name,cat,unit,qty,min:minimum,public:publicVisible,stockLocations:qty?[{location:newLocation||"Unassigned",qty}]:[]});
-  movement("Item created",createdId,qty,"Added from Inventory table"+(newLocation?" · Location: "+newLocation:" · Location unassigned"));
-  inventoryAddMode=false;
-  save();render();notify(name+" added to inventory.");return
+  data.items.push({id:createdId,name,cat,unit,qty:total,min:minimum,public:publicVisible,stockLocations:updated});
+  movement("Item created",createdId,total,"Added from Inventory table"+(updated.length?" · "+updated[0].location+": "+total:" · No stock"));
+  inventoryAddMode=false;save();render();notify(name+" added to inventory.");return
  }
  if(form.id==="pending-receipt-form"){
   const reportId=String(fd.get("reportId")||""),p=pendingReports().find(z=>z.id===reportId),x=p&&get(p.item);
