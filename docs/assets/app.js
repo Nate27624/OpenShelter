@@ -198,7 +198,7 @@ function expiryRows(limit=99){
  return lots.map(l=>{const x=get(l.item),d=days(l.expiry);return `<div class="line"><span><strong>${esc(x?.name||l.item)}</strong><small>${l.qty} units · ${esc(l.id)} · ${esc(l.expiry)}</small></span><span class="status ${d<=7?"out":d<=30?"low":"ok"}">${d<0?"Expired":d===0?"Expires today":d+" days left"}</span></div>`}).join("")||`<div class="empty-state">No dated batches recorded.</div>`;
 }
 function recentRows(limit=6){
- return data.history.slice(0,limit).map(e=>`<div class="history-row"><span class="movement-type ${e.change<0?"outbound":"inbound"}">${e.kind==="Correction"?"ADJ":e.change<0?"OUT":"IN"}</span><span class="history-description"><strong>${esc(e.kind)} · ${esc(get(e.item)?.name||e.item)}</strong><small>${esc(e.time)} · ${esc(e.note||"No note")}</small></span><b class="${e.change<0?"negative":"positive"}">${e.change>0?"+":""}${e.change}</b></div>`).join("")||`<div class="empty-state">No recorded activity.</div>`;
+ return data.history.slice(0,limit).map(e=>`<div class="history-row"><span class="movement-type ${e.change<0?"outbound":"inbound"}">${e.kind==="Relocation"?"MOVE":e.kind==="Correction"?"ADJ":e.change<0?"OUT":"IN"}</span><span class="history-description"><strong>${esc(e.kind)} · ${esc(get(e.item)?.name||e.item)}</strong><small>${esc(e.time)} · ${esc(e.note||"No note")}</small></span><b class="${e.change<0?"negative":"positive"}">${e.change>0?"+":""}${e.change}</b></div>`).join("")||`<div class="empty-state">No recorded activity.</div>`;
 }
 function overview(){
  const next=expiring().filter(l=>days(l.expiry)<=30).length;
@@ -431,7 +431,7 @@ document.addEventListener("change",e=>{
  if(e.target.id==="correct-public"){const label=document.getElementById("correct-public-label");if(label)label.textContent=e.target.checked?"Visible":"Private"}
 });
 document.addEventListener("submit",e=>{
- const form=e.target;if(!["receive-form","distribute-form","correct-form","purchase-report-form","location-add-form","location-rename-form"].includes(form.id)&&!form.matches("[data-threshold]"))return;
+ const form=e.target;if(!["receive-form","distribute-form","correct-form","purchase-report-form","location-add-form","location-rename-form","location-transfer-form"].includes(form.id)&&!form.matches("[data-threshold]"))return;
  e.preventDefault();
  const fd=new FormData(form);
  if(form.id==="location-add-form"){
@@ -450,6 +450,20 @@ document.addEventListener("submit",e=>{
   data.locations=data.locations.map(loc=>loc===current?newName:loc).sort((a,b)=>a.localeCompare(b));
   for(const x of data.items)for(const stock of x.stockLocations)if(stock.location===current)stock.location=newName;
   save();render();notify("Location renamed to "+newName);return
+ }
+ if(form.id==="location-transfer-form"){
+  const id=String(fd.get("item")||""),x=get(id),from=String(fd.get("from")||""),to=String(fd.get("to")||""),qty=Number(fd.get("qty"));
+  if(!x||!Number.isSafeInteger(qty)||qty<1||!from||!to||from===to||!data.locations.includes(to)||(from!=="Unassigned"&&!data.locations.includes(from))){notify("Choose a supply, quantity, and two different valid locations.");return}
+  const source=x.stockLocations.find(entry=>entry.location===from);
+  if(!source||source.qty<qty){notify("Not enough of that supply at the selected source location.");return}
+  const destination=x.stockLocations.find(entry=>entry.location===to);
+  source.qty-=qty;
+  if(destination)destination.qty+=qty;
+  else x.stockLocations.push({location:to,qty});
+  x.stockLocations=x.stockLocations.filter(entry=>entry.qty>0);
+  x.qty=x.stockLocations.reduce((total,entry)=>total+entry.qty,0);
+  movement("Relocation",id,0,qty+" moved from "+from+" to "+to);
+  save();render();notify("Moved "+qty+" of "+x.name+" to "+to);return
  }
  if(form.id==="purchase-report-form"){
   const id=String(fd.get("item")||""),x=get(id),qty=Number(fd.get("qty")),expected=String(fd.get("expected")||"");
