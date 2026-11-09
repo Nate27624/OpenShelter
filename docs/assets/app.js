@@ -208,9 +208,18 @@ function historyRows(){
  return `<div class="table-wrap"><table class="data-table"><thead><tr><th>When</th><th>Activity</th><th>Supply</th><th>Change</th><th>Note</th></tr></thead><tbody>${data.history.map(x=>`<tr><td>${esc(x.time)}</td><td>${esc(x.kind)}</td><td><b>${esc(get(x.item)?.name||x.item)}</b></td><td class="${x.change<0?"negative":"positive"}">${x.change>0?"+":""}${x.change}</td><td>${esc(x.note||"—")}</td></tr>`).join("")}</tbody></table></div>`;
 }
 function settings(){
- return `<div class="history-settings"><section class="panel">${title("Activity log")}<p class="muted">Every simulated inventory movement is recorded below. In production this audit log must be server-side and immutable.</p>${historyRows()}</section>
+ return `<div class="history-settings"><section class="panel">${title("Activity log")}<p class="muted">Every simulated inventory movement is recorded below. In production this audit log must be server-side and tamper-resistant.</p>${historyRows()}</section>
+ <div class="settings-stack">
+ <section class="panel">${title("Correct a physical count")}<p class="muted">Reconcile the system when a shelf count differs from the recorded quantity. Corrections create an audit entry.</p>
+ <form id="correct-form"><div class="field"><label for="correct-item">Supply</label><select name="item" id="correct-item">${opt("coats")}</select></div>
+ <div id="correct-existing" class="stock-summary">Recorded count: <strong>${get("coats").qty} coats</strong></div>
+ <div class="field"><label for="correct-qty">Count on shelf</label><input id="correct-qty" name="qty" type="number" min="0" step="1" value="${get("coats").qty}" required></div>
+ <div class="field"><label for="correct-reason">Reason for adjustment</label><select name="reason" id="correct-reason"><option>Physical count</option><option>Damaged or discarded</option><option>Missed movement</option><option>Other</option></select></div>
+ <button class="btn primary" type="submit">Save count correction →</button></form>
+ </section>
  <section class="panel">${title("Minimum stock settings")}<p class="muted">Adjust when an item should trigger a low-stock alert.</p>
- <div class="threshold-list">${data.items.map(x=>`<form class="threshold-row" data-threshold="${x.id}"><span><strong>${esc(x.name)}</strong><small>${x.qty} in stock</small></span><label class="sr-only" for="min-${x.id}">Minimum for ${esc(x.name)}</label><input id="min-${x.id}" type="number" name="minimum" min="0" step="1" value="${x.min}" required><button type="submit" class="mini-btn">Save</button></form>`).join("")}</div></section></div>`;
+ <div class="threshold-list">${data.items.map(x=>`<form class="threshold-row" data-threshold="${x.id}"><span><strong>${esc(x.name)}</strong><small>${x.qty} in stock</small></span><label class="sr-only" for="min-${x.id}">Minimum for ${esc(x.name)}</label><input id="min-${x.id}" type="number" name="minimum" min="0" step="1" value="${x.min}" required><button type="submit" class="mini-btn">Save</button></form>`).join("")}</div></section>
+ </div></div>`;
 }
 function view(){return ({overview,inventory,receive,distribute,alerts,public:publicNeeds,history:settings}[section]||overview)()}
 function render(){root.innerHTML=shell();}
@@ -223,7 +232,7 @@ document.addEventListener("click",e=>{
  if(act==="quick"){changeStock(id,1,"Donation","Quick intake");return}
  if(act==="one-out"){changeStock(id,-1,"Distribution","One-click distribution");return}
  if(act==="prefill"){go("receive");const select=document.getElementById("receive-item");if(select)select.value=id;return}
- if(act==="edit"){go("history");const el=document.getElementById("min-"+id);el?.scrollIntoView?.({block:"center",behavior:"smooth"});return}
+ if(act==="edit"){go("history");const el=document.getElementById("correct-item");if(el){el.value=id;const x=get(id);document.getElementById("correct-existing").innerHTML="Recorded count: <strong>"+x.qty+" "+esc(x.unit)+"</strong>";document.getElementById("correct-qty").value=x.qty;el.scrollIntoView?.({block:"center",behavior:"smooth"});}return}
  if(act==="reset"){if(!confirm("Restore the fictional inventory to its original sample values?"))return;data=initial();save();search="";filter="All";stockFilter="All";render();notify("Example inventory restored.");return}
 });
 document.addEventListener("input",e=>{
@@ -234,10 +243,11 @@ document.addEventListener("change",e=>{
  if(e.target.id==="status-filter"){stockFilter=e.target.value;const pane=document.getElementById("inventory-results");if(pane)pane.innerHTML=stockRows()}
  if(e.target.id==="receive-item"){const el=document.getElementById("new-item-fields");if(el)el.hidden=e.target.value!=="__new"}
  if(e.target.id==="distribute-item"){const x=get(e.target.value);const el=document.getElementById("distribute-available");if(x&&el)el.innerHTML="Available now: <strong>"+x.qty+" "+esc(x.unit)+"</strong>"}
+ if(e.target.id==="correct-item"){const x=get(e.target.value),el=document.getElementById("correct-existing");if(x&&el){el.innerHTML="Recorded count: <strong>"+x.qty+" "+esc(x.unit)+"</strong>";document.getElementById("correct-qty").value=x.qty;}}
  if(e.target.dataset.public){const x=get(e.target.dataset.public);if(!x)return;x.public=e.target.checked;save();render();notify(x.name+": "+(x.public?"public eligible":"private"))}
 });
 document.addEventListener("submit",e=>{
- const form=e.target;if(!["receive-form","distribute-form"].includes(form.id)&&!form.matches("[data-threshold]"))return;
+ const form=e.target;if(!["receive-form","distribute-form","correct-form"].includes(form.id)&&!form.matches("[data-threshold]"))return;
  e.preventDefault();
  const fd=new FormData(form);
  if(form.id==="receive-form"){
@@ -262,6 +272,13 @@ document.addEventListener("submit",e=>{
   const id=String(fd.get("item")),qty=Number(fd.get("qty"));if(!Number.isSafeInteger(qty)||qty<1||qty>1000000){notify("Enter a valid positive quantity.");return}
   const note=String(fd.get("purpose"))+(fd.get("note")?" · "+String(fd.get("note")).slice(0,150):"");
   changeStock(id,-qty,"Distribution",note);return;
+ }
+ if(form.id==="correct-form"){
+  const id=String(fd.get("item")),qty=Number(fd.get("qty")),x=get(id);
+  if(!x||!Number.isSafeInteger(qty)||qty<0||qty>1000000){notify("Enter a valid physical count.");return}
+  const diff=qty-x.qty;
+  if(diff===0){notify("No adjustment needed; count already matches.");return}
+  changeStock(id,diff,"Correction",String(fd.get("reason")||"Physical count"));return;
  }
  if(form.matches("[data-threshold]")){
   const id=form.dataset.threshold,min=Number(fd.get("minimum")),x=get(id);
