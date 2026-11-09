@@ -78,8 +78,6 @@ const locationOptions=()=>data.locations.map(loc=>`<option value="${esc(loc)}">$
 const locationBalances=x=>(x.stockLocations||[]).filter(entry=>entry.qty>0).sort((a,b)=>a.location.localeCompare(b.location));
 const stockLocationOptions=x=>locationBalances(x).map(entry=>`<option value="${esc(entry.location)}">${esc(entry.location)} (${entry.qty.toLocaleString()} available)</option>`).join("");
 const locationSummary=x=>locationBalances(x).map(entry=>`${entry.location} (${entry.qty.toLocaleString()})`).join(", ")||"—";
-const locationUsage=loc=>data.items.reduce((total,x)=>total+(x.stockLocations||[]).filter(entry=>entry.location===loc).reduce((sum,entry)=>sum+entry.qty,0),0);
-const locationItemCount=loc=>data.items.filter(x=>(x.stockLocations||[]).some(entry=>entry.location===loc&&entry.qty>0)).length;
 const matchingLocation=name=>data.locations.find(loc=>loc.toLowerCase()===name.toLowerCase());
 const cleanLocation=name=>String(name||"").trim().replace(/\s+/g," ");
 const validLocation=name=>name.length>=1&&name.length<=60&&!/[\x00-\x1f\x7f]/.test(name)&&name.toLowerCase()!=="unassigned";
@@ -283,35 +281,6 @@ function inventory(){
  <div class="inventory-filters"><div class="field search-field"><label for="stock-search">Search items</label><input id="stock-search" type="search" placeholder="Name, category or shelf…" value="${esc(search)}"></div>
  <div class="field"><label for="cat-filter">Category</label><select id="cat-filter"><option>All</option>${categories().map(c=>`<option ${filter===c?"selected":""}>${esc(c)}</option>`).join("")}</select></div>
  <div class="field"><label for="status-filter">Status</label><select id="status-filter">${["All","Low stock","Public","Private"].map(c=>`<option ${stockFilter===c?"selected":""}>${c}</option>`).join("")}</select></div></div>
- <details class="inventory-location-tools" id="inventory-location-tools">
- <summary>Manage storage locations</summary>
- <p class="muted">Add and rename shelves, remove unused locations, or move inventory between locations.</p>
- <div class="storage-location-list">
-  ${data.locations.map(loc=>`<div class="storage-location-row"><span><strong>${esc(loc)}</strong><small>${locationItemCount(loc)} supply ${locationItemCount(loc)===1?"type":"types"} stored</small></span><button type="button" class="mini-btn" data-action="location-remove" data-id="${esc(loc)}" ${locationUsage(loc)?"disabled":""} title="${locationUsage(loc)?"Only empty locations can be removed":"Remove unused location"}">Remove</button></div>`).join("")||'<p class="muted">No storage locations yet.</p>'}
- </div>
- <div class="location-admin-grid">
-  <form id="location-add-form" class="location-admin-form">
-   <div class="field"><label for="location-add-name">Add storage location</label><input id="location-add-name" name="name" maxlength="60" placeholder="e.g. Pantry shelf 3" required></div>
-   <button type="submit" class="btn small">Add location</button>
-  </form>
-  <form id="location-rename-form" class="location-admin-form">
-   <div class="field"><label for="location-rename-old">Rename a location</label><select id="location-rename-old" name="oldLocation" required><option value="">Select location…</option>${locationOptions()}</select></div>
-   <div class="field"><label for="location-rename-new">New name</label><input id="location-rename-new" name="newName" maxlength="60" placeholder="New location name" required></div>
-   <button type="submit" class="btn small">Rename location</button>
-  </form>
-  <form id="location-transfer-form" class="location-admin-form location-transfer-form">
-   <h3>Move stock between locations</h3>
-   <p class="tiny muted">Assign unassigned stock to a shelf or move stock from one location to another without changing the total available.</p>
-   <div class="location-transfer-grid">
-    <div class="field"><label for="location-transfer-item">Supply</label><select id="location-transfer-item" name="item" required>${opt("soup")}</select></div>
-    <div class="field"><label for="location-transfer-qty">Quantity to move</label><input type="number" id="location-transfer-qty" name="qty" min="1" step="1" value="1" required></div>
-    <div class="field"><label for="location-transfer-from">From</label><select id="location-transfer-from" name="from" required><option value="">Choose source…</option><option value="Unassigned">Unassigned</option>${locationOptions()}</select></div>
-    <div class="field"><label for="location-transfer-to">To</label><select id="location-transfer-to" name="to" required><option value="">Choose destination…</option>${locationOptions()}</select></div>
-   </div>
-   <button type="submit" class="btn small">Move stock</button>
-  </form>
- </div>
- </details>
  <div id="inventory-results">${stockRows()}</div>
  </section>
 `;
@@ -492,11 +461,6 @@ document.addEventListener("click",e=>{
  }
  if(act==="pending-receipt-cancel"){pendingReceiptId=null;render();return}
  if(act==="pending-dismiss"){const p=pendingReports().find(x=>x.id===id);if(!p){notify("Report already handled.");return}if(!confirm("Dismiss this unreceived purchase report? Inventory will not change."))return;p.status="dismissed";p.completedAt=now();if(pendingReceiptId===id)pendingReceiptId=null;movement("Purchase report dismissed",p.item,0,"No receipt confirmed");save();render();notify("Purchase report dismissed; stock unchanged.");return}
- if(act==="location-remove"){
-  if(!data.locations.includes(id)||locationUsage(id)>0){notify("Only unused storage locations can be removed.");return}
-  data.locations=data.locations.filter(loc=>loc!==id);
-  save();render();notify("Unused location removed.");return
- }
  if(act==="reset"){if(!confirm("Restore the fictional inventory to its original sample values?"))return;data=initial();normalizeStockLocations();save();search="";filter="All";stockFilter="All";publicSearch="";publicCategory="All";purchaseItemId=null;purchaseFeedback="";pendingReceiptId=null;inventoryEditMode=false;inventoryAddMode=false;render();notify("Example inventory restored.");return}
 });
 function previewInventoryLocationTotal(input){
@@ -528,7 +492,7 @@ document.addEventListener("change",e=>{
  if(e.target.id==="distribute-item"){const x=get(e.target.value),el=document.getElementById("distribute-available"),locations=document.getElementById("distribute-location");if(x&&el)el.innerHTML="Available now: <strong>"+x.qty+" "+esc(x.unit)+"</strong>";if(x&&locations)locations.innerHTML='<option value="">Automatic allocation (location not recorded)</option>'+stockLocationOptions(x)}
 });
 document.addEventListener("submit",e=>{
- const form=e.target;if(!["receive-form","distribute-form","inventory-add-form","purchase-report-form","location-add-form","location-rename-form","location-transfer-form","pending-receipt-form"].includes(form.id)&&!form.dataset?.inventoryEdit&&!form.matches("[data-threshold]"))return;
+ const form=e.target;if(!["receive-form","distribute-form","inventory-add-form","purchase-report-form","pending-receipt-form"].includes(form.id)&&!form.dataset?.inventoryEdit&&!form.matches("[data-threshold]"))return;
  e.preventDefault();
  const fd=new FormData(form);
  if(form.id==="inventory-add-form"||form.dataset?.inventoryEdit){
@@ -644,37 +608,6 @@ document.addEventListener("submit",e=>{
   }
   notify("Receipt confirmed for "+x.name);
   return
- }
- if(form.id==="location-add-form"){
-  const name=cleanLocation(fd.get("name"));
-  if(!validLocation(name)){notify("Enter a valid location name up to 60 characters.");return}
-  if(matchingLocation(name)){notify("That storage location already exists.");return}
-  data.locations.push(name);data.locations.sort((a,b)=>a.localeCompare(b));
-  save();render();notify("Storage location added: "+name);return
- }
- if(form.id==="location-rename-form"){
-  const current=String(fd.get("oldLocation")||""),newName=cleanLocation(fd.get("newName"));
-  if(!data.locations.includes(current)||!validLocation(newName)){notify("Choose a location and enter a valid new name.");return}
-  const duplicate=matchingLocation(newName);
-  if(duplicate&&duplicate!==current){notify("That location name already exists.");return}
-  if(newName===current){notify("The location name has not changed.");return}
-  data.locations=data.locations.map(loc=>loc===current?newName:loc).sort((a,b)=>a.localeCompare(b));
-  for(const x of data.items)for(const stock of x.stockLocations)if(stock.location===current)stock.location=newName;
-  save();render();notify("Location renamed to "+newName);return
- }
- if(form.id==="location-transfer-form"){
-  const id=String(fd.get("item")||""),x=get(id),from=String(fd.get("from")||""),to=String(fd.get("to")||""),qty=Number(fd.get("qty"));
-  if(!x||!Number.isSafeInteger(qty)||qty<1||!from||!to||from===to||!data.locations.includes(to)||(from!=="Unassigned"&&!data.locations.includes(from))){notify("Choose a supply, quantity, and two different valid locations.");return}
-  const source=x.stockLocations.find(entry=>entry.location===from);
-  if(!source||source.qty<qty){notify("Not enough of that supply at the selected source location.");return}
-  const destination=x.stockLocations.find(entry=>entry.location===to);
-  source.qty-=qty;
-  if(destination)destination.qty+=qty;
-  else x.stockLocations.push({location:to,qty});
-  x.stockLocations=x.stockLocations.filter(entry=>entry.qty>0);
-  x.qty=x.stockLocations.reduce((total,entry)=>total+entry.qty,0);
-  movement("Relocation",id,0,qty+" moved from "+from+" to "+to);
-  save();render();notify("Moved "+qty+" of "+x.name+" to "+to);return
  }
  if(form.id==="purchase-report-form"){
   const id=String(fd.get("item")||""),x=get(id),qty=Number(fd.get("qty")),expected=String(fd.get("expected")||"");
