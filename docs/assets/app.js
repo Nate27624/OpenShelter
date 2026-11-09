@@ -79,8 +79,8 @@ const locationBalances=x=>(x.stockLocations||[]).filter(entry=>entry.qty>0).sort
 const locationSummary=x=>locationBalances(x).map(entry=>`${entry.location} (${entry.qty.toLocaleString()})`).join(", ")||"—";
 const locationUsage=loc=>data.items.reduce((total,x)=>total+(x.stockLocations||[]).filter(entry=>entry.location===loc).reduce((sum,entry)=>sum+entry.qty,0),0);
 const matchingLocation=name=>data.locations.find(loc=>loc.toLowerCase()===name.toLowerCase());
-const cleanLocation=name=>String(name||"").trim().replace(/\\s+/g," ");
-const validLocation=name=>name.length>=1&&name.length<=60&&!/[\\x00-\\x1f\\x7f]/.test(name)&&name!=="Unassigned";
+const cleanLocation=name=>String(name||"").trim().replace(/\s+/g," ");
+const validLocation=name=>name.length>=1&&name.length<=60&&!/[\x00-\x1f\x7f]/.test(name)&&name!=="Unassigned";
 const save=()=>{try{localStorage.setItem(storageKey,JSON.stringify(data))}catch{}};
 const now=()=>new Date().toLocaleString([],{month:"short",day:"numeric",hour:"numeric",minute:"2-digit"});
 const opt=(selected)=>data.items.map(x=>`<option value="${esc(x.id)}" ${x.id===selected?"selected":""}>${esc(x.name)}</option>`).join("");
@@ -218,10 +218,10 @@ function overview(){
  </section></div>`;
 }
 function stockRows(){
- const rows=data.items.filter(x=>(filter==="All"||x.cat===filter)&&(stockFilter==="All"||(stockFilter==="Low stock"?atRisk(x):stockFilter==="Public"?x.public:!x.public))&&`${x.name} ${x.cat} ${x.location}`.toLowerCase().includes(search.toLowerCase()));
+ const rows=data.items.filter(x=>(filter==="All"||x.cat===filter)&&(stockFilter==="All"||(stockFilter==="Low stock"?atRisk(x):stockFilter==="Public"?x.public:!x.public))&&`${x.name} ${x.cat} ${locationSummary(x)}`.toLowerCase().includes(search.toLowerCase()));
  return `<div class="table-wrap"><table class="data-table inventory-table"><thead><tr><th>Supply</th><th>Category</th><th>Available</th><th>Minimum</th><th>Location</th><th>Status</th><th>Visible</th><th></th></tr></thead><tbody>
- ${rows.map(x=>`<tr><td><strong>${esc(x.name)}</strong></td><td>${esc(x.cat)}</td><td><b>${x.qty}</b> <small>${esc(x.unit)}</small></td><td>${x.min}</td><td>${esc(x.location)}</td><td>${badge(x)}</td><td><span class="visibility-chip ${x.public?"published":""}">${x.public?"Public":"Private"}</span></td><td><button class="mini-btn" data-action="edit" data-id="${esc(x.id)}">Adjust</button></td></tr>`).join("")||`<tr><td colspan="8" class="empty-state">No matching supplies. Clear a filter and try again.</td></tr>`}</tbody></table></div>
- <p class="table-foot">${rows.length} of ${data.items.length} supply types shown. Changes are reflected in the dashboard and alert screens.</p>`;
+ ${rows.map(x=>`<tr><td><strong>${esc(x.name)}</strong></td><td>${esc(x.cat)}</td><td><b>${x.qty}</b> <small>${esc(x.unit)}</small></td><td>${x.min}</td><td class="location-cell">${esc(locationSummary(x))}</td><td>${badge(x)}</td><td><span class="visibility-chip ${x.public?"published":""}">${x.public?"Public":"Private"}</span></td><td><button class="mini-btn" data-action="edit" data-id="${esc(x.id)}">Adjust</button></td></tr>`).join("")||`<tr><td colspan="8" class="empty-state">No matching supplies. Clear a filter and try again.</td></tr>`}</tbody></table></div>
+ <p class="table-foot">${rows.length} of ${data.items.length} supply types shown. Quantities and storage-location balances come from the same inventory records used by receiving, distribution, alerts, and the public list.</p>`;
 }
 function inventory(){
  return `<section class="panel">
