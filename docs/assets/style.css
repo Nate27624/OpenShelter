@@ -279,6 +279,18 @@ p{margin:0 0 1em}
 .inventory-table-editing td:nth-child(7){min-width:100px}
 .inventory-table-editing td:nth-child(8){min-width:77px}
 .inventory-table-editing .inventory-unit-input{display:block;margin-top:6px}
+.inventory-total-count{display:block;font-size:21px;font-weight:700;color:#303030;font-variant-numeric:tabular-nums;line-height:1.4}
+.inventory-total-subtitle{display:block;margin-top:5px;font-size:11px;line-height:1.4;color:#777}
+.inventory-table-editing td:nth-child(5){min-width:260px;width:27%}
+.inventory-location-counts{display:grid;gap:7px}
+.inventory-location-editor{display:grid;grid-template-columns:minmax(65px,1fr) 84px;gap:8px;align-items:center}
+.inventory-location-editor span{font-size:12px;line-height:1.4;color:#444;overflow-wrap:anywhere}
+.inventory-table-editing .inventory-location-editor input{width:84px;min-width:0;font-variant-numeric:tabular-nums;text-align:right}
+.inventory-location-add{display:grid;grid-template-columns:minmax(100px,1fr) 84px;gap:8px;align-items:center;margin-top:11px;padding-top:10px;border-top:1px solid #dedbd8}
+.inventory-table-editing .inventory-location-add select{min-width:0}
+.inventory-table-editing .inventory-location-add input{width:84px;min-width:0;font-variant-numeric:tabular-nums;text-align:right}
+.inventory-location-add-new{border-top:0;padding-top:0;margin-top:0}
+
 .inventory-location-current{display:block;margin:1px 0 8px;line-height:1.45;overflow-wrap:anywhere}
 .inventory-table-editing .location-cell small:not(.inventory-location-current){
   display:block;margin:6px 0 0;font-size:11px;line-height:1.4
