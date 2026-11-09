@@ -240,14 +240,16 @@ function publicNeedsRows(){
   const pending=pendingFor(x.id),needed=Math.max(0,x.min-x.qty-pending);
   const formOpen=purchaseItemId===x.id;
   return `<div class="simple-supply-item">
-   <div class="simple-supply-top">
+   <div class="simple-supply-main">
     <div class="simple-supply-name"><h4>${esc(x.name)}</h4></div>
     <div class="simple-supply-count"><strong>${x.qty.toLocaleString()}</strong><span>${esc(x.unit)} on hand</span></div>
-   </div>
-   <div class="simple-supply-bottom">
-    <p class="simple-supply-details"><span>On the way: <strong>${pending.toLocaleString()}</strong></span><span>Stock goal: <strong>${x.min.toLocaleString()}</strong></span><span class="simple-supply-need ${needed?"needs-more":"target-met"}">Still needed: <strong>${needed.toLocaleString()}</strong></span></p>
+    <div class="simple-supply-goal"><span>Stock goal:</span><strong>${x.min.toLocaleString()}</strong><span>${esc(x.unit)}</span></div>
     <button type="button" class="btn small report-purchase-btn" data-action="purchase-open" data-id="${esc(x.id)}" aria-expanded="${formOpen?"true":"false"}">${formOpen?"Close form":"I've purchased this"}</button>
    </div>
+   <p class="simple-supply-secondary">
+    <span>On the way: <strong>${pending.toLocaleString()}</strong></span>
+    <span class="simple-supply-need ${needed?"needs-more":"target-met"}">Still needed: <strong>${needed.toLocaleString()}</strong></span>
+   </p>
    ${formOpen?`<form class="purchase-report-form" id="purchase-report-form"><input type="hidden" name="item" value="${esc(x.id)}">
     <h4>Report a purchase</h4>
     <p class="muted">Enter the amount you've purchased for the shelter. This demo report stays in this browser and is not sent to the shelter.</p>
