@@ -65,7 +65,7 @@ function normalizeStockLocations(){
 normalizeStockLocations();
 if(location.hash==="#overview")location.hash="#inventory";
 let section=location.hash==="#admin"?"inventory":sections.some(s=>"#"+s[0]===location.hash)?location.hash.slice(1):"public";
-let search="",filter="All",stockFilter="All",publicSearch="",publicCategory="All",purchaseItemId=null,purchaseFeedback="",noticeTimer;
+let search="",filter="All",stockFilter="All",publicSearch="",publicCategory="All",purchaseItemId=null,purchaseFeedback="",pendingReceiptId=null,noticeTimer;
 const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const get=id=>data.items.find(x=>x.id===id);
 const atRisk=x=>x.qty<=x.min;
@@ -98,8 +98,37 @@ function pendingRows(){
  const pending=pendingReports().slice().sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
  if(!pending.length)return `<p class="pending-empty">No donor purchase reports are awaiting confirmation.</p>`;
  return `<div class="pending-list">${pending.map(p=>{
-  const x=get(p.item); if(!x)return "";
-  return `<div class="pending-row"><div class="pending-description"><strong>${esc(x.name)}</strong><small>${p.qty} reported purchased · ${esc(p.time||"Recently reported")}${p.expected?" · Expected "+esc(p.expected):""}</small></div><span class="pending-tag">Awaiting receipt</span><div class="pending-actions"><button type="button" class="btn primary small" data-action="pending-receive" data-id="${esc(p.id)}">Mark received</button><button type="button" class="btn small" data-action="pending-dismiss" data-id="${esc(p.id)}">Dismiss</button></div></div>`;
+  const x=get(p.item);if(!x)return "";
+  const opened=pendingReceiptId===p.id;
+  return `<div class="pending-entry">
+   <div class="pending-row">
+    <div class="pending-description"><strong>${esc(x.name)}</strong><small>${p.qty} reported purchased · ${esc(p.time||"Recently reported")}${p.expected?" · Expected "+esc(p.expected):""}</small></div>
+    <span class="pending-tag">Awaiting receipt</span>
+    <div class="pending-actions">
+     <button type="button" class="btn primary small" data-action="pending-receive" data-id="${esc(p.id)}" aria-expanded="${opened?"true":"false"}" aria-controls="pending-receipt-form">${opened?"Close details":"Mark received"}</button>
+     <button type="button" class="btn small" data-action="pending-dismiss" data-id="${esc(p.id)}">Dismiss</button>
+    </div>
+   </div>
+   ${opened?`<form id="pending-receipt-form" class="pending-receipt-form">
+    <input type="hidden" name="reportId" value="${esc(p.id)}">
+    <h4>Confirm received donation</h4>
+    <p class="muted">Verify the ${p.qty} ${esc(x.unit)} of ${esc(x.name)} have arrived. Inventory updates only after confirmation.</p>
+    <div class="form-grid">
+     <div class="field"><label for="pending-receipt-location">Storage location <span class="optional">(optional)</span></label>
+      <select id="pending-receipt-location" name="location"><option value="">No location specified</option>${locationOptions()}<option value="__add">＋ Add a new location…</option></select></div>
+     <div class="field"><label for="pending-receipt-expiry">Expiration date <span class="optional">(optional)</span></label>
+      <input id="pending-receipt-expiry" name="expiry" type="date"></div>
+    </div>
+    <div id="pending-receipt-add-location" class="new-location-fields" hidden>
+     <div class="field"><label for="pending-receipt-new-location">New storage location</label>
+      <input id="pending-receipt-new-location" name="newLocation" maxlength="60" placeholder="e.g. Pantry shelf 3"></div>
+    </div>
+    <div class="pending-receipt-controls">
+     <button type="submit" class="btn primary">Confirm receipt</button>
+     <button type="button" class="btn" data-action="pending-receipt-cancel">Cancel</button>
+    </div>
+   </form>`:""}
+  </div>`;
  }).join("")}</div>`;
 }
 function changeStock(id,delta,kind,note,location=""){
@@ -383,14 +412,22 @@ document.addEventListener("click",e=>{
  if(act==="prefill"){go("receive");const select=document.getElementById("receive-item");if(select)select.value=id;return}
  if(act==="edit"){go("history");const el=document.getElementById("correct-item");if(el){el.value=id;const x=get(id);document.getElementById("correct-existing").innerHTML="Recorded count: <strong>"+x.qty+" "+esc(x.unit)+"</strong>";document.getElementById("correct-qty").value=x.qty;document.getElementById("correct-public").checked=x.public;document.getElementById("correct-public-label").textContent=x.public?"Visible":"Private";el.scrollIntoView?.({block:"center",behavior:"smooth"});}return}
  if(act==="purchase-open"){const x=get(id);if(!x||!x.public){notify("This item is not available for public reporting.");return}purchaseItemId=purchaseItemId===id?null:id;purchaseFeedback="";render();document.getElementById("report-quantity")?.focus?.();return}
- if(act==="pending-receive"){const p=pendingReports().find(x=>x.id===id),x=p&&get(p.item);if(!p||!x){notify("Report already handled or invalid.");return}if(!Number.isSafeInteger(p.qty)||p.qty<1||x.qty+p.qty>1000000){notify("Cannot receive this quantity.");return}p.status="received";p.completedAt=now();const ok=changeStock(p.item,p.qty,"Donation","Confirmed donor purchase "+p.id);if(!ok){p.status="pending";save();render();}return}
- if(act==="pending-dismiss"){const p=pendingReports().find(x=>x.id===id);if(!p){notify("Report already handled.");return}if(!confirm("Dismiss this unreceived purchase report? Inventory will not change."))return;p.status="dismissed";p.completedAt=now();movement("Purchase report dismissed",p.item,0,"No receipt confirmed");save();render();notify("Purchase report dismissed; stock unchanged.");return}
+ if(act==="pending-receive"){
+  const p=pendingReports().find(x=>x.id===id),x=p&&get(p.item);
+  if(!p||!x){notify("Report already handled or invalid.");return}
+  pendingReceiptId=pendingReceiptId===id?null:id;
+  render();
+  if(pendingReceiptId)document.getElementById("pending-receipt-location")?.focus?.();
+  return
+ }
+ if(act==="pending-receipt-cancel"){pendingReceiptId=null;render();return}
+ if(act==="pending-dismiss"){const p=pendingReports().find(x=>x.id===id);if(!p){notify("Report already handled.");return}if(!confirm("Dismiss this unreceived purchase report? Inventory will not change."))return;p.status="dismissed";p.completedAt=now();if(pendingReceiptId===id)pendingReceiptId=null;movement("Purchase report dismissed",p.item,0,"No receipt confirmed");save();render();notify("Purchase report dismissed; stock unchanged.");return}
  if(act==="location-remove"){
   if(!data.locations.includes(id)||locationUsage(id)>0){notify("Only unused storage locations can be removed.");return}
   data.locations=data.locations.filter(loc=>loc!==id);
   save();render();notify("Unused location removed.");return
  }
- if(act==="reset"){if(!confirm("Restore the fictional inventory to its original sample values?"))return;data=initial();normalizeStockLocations();save();search="";filter="All";stockFilter="All";publicSearch="";publicCategory="All";purchaseItemId=null;purchaseFeedback="";render();notify("Example inventory restored.");return}
+ if(act==="reset"){if(!confirm("Restore the fictional inventory to its original sample values?"))return;data=initial();normalizeStockLocations();save();search="";filter="All";stockFilter="All";publicSearch="";publicCategory="All";purchaseItemId=null;purchaseFeedback="";pendingReceiptId=null;render();notify("Example inventory restored.");return}
 });
 document.addEventListener("input",e=>{
  if(e.target.id==="stock-search"){search=e.target.value;const pane=document.getElementById("inventory-results");if(pane)pane.innerHTML=stockRows();}
@@ -402,14 +439,58 @@ document.addEventListener("change",e=>{
  if(e.target.id==="public-cat-filter"){publicCategory=e.target.value;const pane=document.getElementById("public-preview");if(pane)pane.innerHTML=publicNeedsRows()}
  if(e.target.id==="receive-item"){const el=document.getElementById("new-item-fields");if(el)el.hidden=e.target.value!=="__new"}
  if(e.target.id==="receive-location"){const el=document.getElementById("receive-add-location");if(el)el.hidden=e.target.value!=="__add"}
+ if(e.target.id==="pending-receipt-location"){const el=document.getElementById("pending-receipt-add-location");if(el)el.hidden=e.target.value!=="__add"}
  if(e.target.id==="distribute-item"){const x=get(e.target.value),el=document.getElementById("distribute-available"),locations=document.getElementById("distribute-location");if(x&&el)el.innerHTML="Available now: <strong>"+x.qty+" "+esc(x.unit)+"</strong>";if(x&&locations)locations.innerHTML='<option value="">Automatic allocation (location not recorded)</option>'+stockLocationOptions(x)}
  if(e.target.id==="correct-item"){const x=get(e.target.value),el=document.getElementById("correct-existing");if(x&&el){el.innerHTML="Recorded count: <strong>"+x.qty+" "+esc(x.unit)+"</strong>";document.getElementById("correct-qty").value=x.qty;document.getElementById("correct-public").checked=x.public;document.getElementById("correct-public-label").textContent=x.public?"Visible":"Private";}}
  if(e.target.id==="correct-public"){const label=document.getElementById("correct-public-label");if(label)label.textContent=e.target.checked?"Visible":"Private"}
 });
 document.addEventListener("submit",e=>{
- const form=e.target;if(!["receive-form","distribute-form","correct-form","purchase-report-form","location-add-form","location-rename-form","location-transfer-form"].includes(form.id)&&!form.matches("[data-threshold]"))return;
+ const form=e.target;if(!["receive-form","distribute-form","correct-form","purchase-report-form","location-add-form","location-rename-form","location-transfer-form","pending-receipt-form"].includes(form.id)&&!form.matches("[data-threshold]"))return;
  e.preventDefault();
  const fd=new FormData(form);
+ if(form.id==="pending-receipt-form"){
+  const reportId=String(fd.get("reportId")||""),p=pendingReports().find(z=>z.id===reportId),x=p&&get(p.item);
+  if(!p||!x){pendingReceiptId=null;render();notify("This purchase report is no longer awaiting receipt.");return}
+  if(pendingReceiptId!==reportId){notify("Open the purchase report before confirming it.");return}
+  const qty=Number(p.qty);
+  if(!Number.isSafeInteger(qty)||qty<1||x.qty+qty>1000000){notify("Cannot receive this quantity.");return}
+  const expiry=String(fd.get("expiry")||"");
+  if(expiry){
+   const date=/^\d{4}-\d{2}-\d{2}$/.test(expiry)?new Date(expiry+"T00:00:00Z"):null;
+   if(!date||!Number.isFinite(date.getTime())||date.toISOString().slice(0,10)!==expiry){notify("Enter a valid expiration date.");return}
+  }
+  const selected=String(fd.get("location")||"");
+  let location="";
+  if(selected==="__add"){
+   const typed=cleanLocation(fd.get("newLocation"));
+   if(!validLocation(typed)){notify("Enter a valid new storage location name (up to 60 characters).");return}
+   location=matchingLocation(typed)||typed;
+  }else if(selected){
+   location=matchingLocation(selected)||"";
+   if(!location){notify("Select an existing location or add a new one.");return}
+  }
+  const newLocation=location&&!data.locations.includes(location);
+  if(newLocation)data.locations.push(location);
+  data.locations.sort((a,b)=>a.localeCompare(b));
+  const lot=expiry?{id:"LOT-"+Date.now().toString(36).toUpperCase()+"-"+Math.random().toString(36).slice(2,6),item:p.item,qty,expiry}:null;
+  if(lot)data.lots.push(lot);
+  const priorCompleted=p.completedAt;
+  p.status="received";
+  p.completedAt=now();
+  pendingReceiptId=null;
+  const note="Confirmed donor purchase "+p.id+(location?" · Stored at "+location:" · Location unassigned");
+  if(!changeStock(p.item,qty,"Donation",note,location)){
+   p.status="pending";
+   if(priorCompleted===undefined)delete p.completedAt;else p.completedAt=priorCompleted;
+   if(lot)data.lots=data.lots.filter(item=>item!==lot);
+   if(newLocation)data.locations=data.locations.filter(name=>name!==location);
+   pendingReceiptId=reportId;
+   render();
+   return;
+  }
+  notify("Receipt confirmed for "+x.name);
+  return
+ }
  if(form.id==="location-add-form"){
   const name=cleanLocation(fd.get("name"));
   if(!validLocation(name)){notify("Enter a valid location name up to 60 characters.");return}
